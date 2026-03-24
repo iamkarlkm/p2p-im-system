@@ -1,0 +1,422 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: im-backend-sa
+  namespace: im-system
+  labels:
+    app: im-backend
+    component: service-account
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: im-backend-cluster-role
+  labels:
+    app: im-backend
+    component: rbac
+rules:
+- apiGroups: [""]
+  resources: ["pods", "services", "endpoints", "persistentvolumeclaims", "configmaps", "secrets", "events"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+- apiGroups: ["apps"]
+  resources: ["deployments", "statefulsets", "daemonsets", "replicasets"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+- apiGroups: ["autoscaling"]
+  resources: ["horizontalpodautoscalers"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+- apiGroups: ["policy"]
+  resources: ["poddisruptionbudgets"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+- apiGroups: ["networking.k8s.io"]
+  resources: ["ingresses", "networkpolicies"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+- apiGroups: ["batch"]
+  resources: ["jobs", "cronjobs"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+- apiGroups: ["cert-manager.io"]
+  resources: ["certificates", "issuers"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["monitoring.coreos.com"]
+  resources: ["servicemonitors", "podmonitors", "prometheusrules"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+- apiGroups: ["custom.metrics.k8s.io"]
+  resources: ["*"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["external.metrics.k8s.io"]
+  resources: ["*"]
+  verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: im-backend-cluster-role-binding
+  labels:
+    app: im-backend
+    component: rbac
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: im-backend-cluster-role
+subjects:
+- kind: ServiceAccount
+  name: im-backend-sa
+  namespace: im-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: im-backend-role
+  namespace: im-system
+  labels:
+    app: im-backend
+    component: rbac
+rules:
+- apiGroups: [""]
+  resources: ["pods", "pods/log", "pods/exec", "services", "endpoints", "configmaps", "secrets"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+- apiGroups: ["apps"]
+  resources: ["deployments", "statefulsets", "daemonsets", "replicasets"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+- apiGroups: ["autoscaling"]
+  resources: ["horizontalpodautoscalers"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+- apiGroups: ["policy"]
+  resources: ["poddisruptionbudgets"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+- apiGroups: ["networking.k8s.io"]
+  resources: ["ingresses", "networkpolicies"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+- apiGroups: ["batch"]
+  resources: ["jobs", "cronjobs"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: im-backend-role-binding
+  namespace: im-system
+  labels:
+    app: im-backend
+    component: rbac
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: im-backend-role
+subjects:
+- kind: ServiceAccount
+  name: im-backend-sa
+  namespace: im-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: im-backend-canary-cluster-role
+  labels:
+    app: im-backend
+    component: canary-rbac
+    track: canary
+rules:
+- apiGroups: ["flagger.app"]
+  resources: ["canaries", "metrics"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+- apiGroups: ["networking.istio.io"]
+  resources: ["virtualservices", "destinationrules", "gateways"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+- apiGroups: ["apps"]
+  resources: ["deployments/scale"]
+  verbs: ["get", "update"]
+- apiGroups: [""]
+  resources: ["configmaps"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: im-backend-canary-cluster-role-binding
+  labels:
+    app: im-backend
+    component: canary-rbac
+    track: canary
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: im-backend-canary-cluster-role
+subjects:
+- kind: ServiceAccount
+  name: im-backend-sa
+  namespace: im-system
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: im-backend-rbac-config
+  namespace: im-system
+data:
+  rbac-policy.yaml: |
+    # RBAC Policy Configuration for IM Backend
+    
+    serviceAccounts:
+      - name: im-backend-sa
+        namespace: im-system
+        automountServiceAccountToken: true
+        annotations:
+          iam.gke.io/gcp-service-account: im-backend@project.iam.gserviceaccount.com
+    
+    # Cluster-level permissions
+    clusterPermissions:
+      # Resource permissions
+      resources:
+        - group: ""
+          resources: ["pods", "services", "endpoints", "configmaps", "secrets", "events"]
+          verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+        
+        - group: "apps"
+          resources: ["deployments", "statefulsets", "daemonsets", "replicasets"]
+          verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+        
+        - group: "autoscaling"
+          resources: ["horizontalpodautoscalers"]
+          verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+        
+        - group: "policy"
+          resources: ["poddisruptionbudgets"]
+          verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+        
+        - group: "networking.k8s.io"
+          resources: ["ingresses", "networkpolicies"]
+          verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+        
+        - group: "batch"
+          resources: ["jobs", "cronjobs"]
+          verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+      
+      # Monitoring permissions
+      monitoring:
+        - group: "monitoring.coreos.com"
+          resources: ["servicemonitors", "podmonitors", "prometheusrules"]
+          verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+        
+        - group: "custom.metrics.k8s.io"
+          resources: ["*"]
+          verbs: ["get", "list", "watch"]
+        
+        - group: "external.metrics.k8s.io"
+          resources: ["*"]
+          verbs: ["get", "list", "watch"]
+      
+      # Certificate management
+      certificates:
+        - group: "cert-manager.io"
+          resources: ["certificates", "issuers"]
+          verbs: ["get", "list", "watch"]
+      
+      # Service mesh permissions
+      serviceMesh:
+        - group: "networking.istio.io"
+          resources: ["virtualservices", "destinationrules", "gateways"]
+          verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+        
+        - group: "flagger.app"
+          resources: ["canaries", "metrics"]
+          verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+    
+    # Namespace-level permissions
+    namespacePermissions:
+      # Default namespace (im-system)
+      - namespace: im-system
+        resources:
+          - group: ""
+            resources: ["pods", "pods/log", "pods/exec", "services", "endpoints", "configmaps", "secrets"]
+            verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+          
+          - group: "apps"
+            resources: ["deployments", "statefulsets", "daemonsets", "replicasets"]
+            verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+          
+          - group: "autoscaling"
+            resources: ["horizontalpodautoscalers"]
+            verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+          
+          - group: "policy"
+            resources: ["poddisruptionbudgets"]
+            verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+          
+          - group: "networking.k8s.io"
+            resources: ["ingresses", "networkpolicies"]
+            verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+          
+          - group: "batch"
+            resources: ["jobs", "cronjobs"]
+            verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+      
+      # Monitoring namespace
+      - namespace: monitoring
+        resources:
+          - group: "monitoring.coreos.com"
+            resources: ["servicemonitors", "podmonitors"]
+            verbs: ["get", "list", "watch"]
+      
+      # Istio namespace
+      - namespace: istio-system
+        resources:
+          - group: "networking.istio.io"
+            resources: ["virtualservices", "destinationrules"]
+            verbs: ["get", "list", "watch"]
+    
+    # Security policies
+    security:
+      # Pod Security Standards
+      podSecurity:
+        level: baseline
+        version: latest
+        controls:
+          - control: HostProcess
+            allowed: false
+          - control: HostNamespaces
+            allowed: false
+          - control: PrivilegedContainers
+            allowed: false
+          - control: Capabilities
+            allowed:
+              - NET_BIND_SERVICE
+          - control: HostPathVolumes
+            allowed: false
+          - control: HostPorts
+            allowed: false
+      
+      # Network policies
+      networkPolicies:
+        enabled: true
+        defaultDeny: true
+        allowedIngress:
+          - from:
+              - namespaceSelector:
+                  matchLabels:
+                    name: istio-system
+            ports:
+              - port: 8080
+                protocol: TCP
+          - from:
+              - namespaceSelector:
+                  matchLabels:
+                    name: monitoring
+            ports:
+              - port: 8081
+                protocol: TCP
+              - port: 8082
+                protocol: TCP
+        allowedEgress:
+          - to:
+              - namespaceSelector:
+                  matchLabels:
+                    name: monitoring
+            ports:
+              - port: 9090
+                protocol: TCP
+          - to:
+              - ipBlock:
+                  cidr: 10.0.0.0/8
+            ports:
+              - port: 3306
+                protocol: TCP
+              - port: 6379
+                protocol: TCP
+      
+      # Security context constraints (OpenShift)
+      scc:
+        enabled: false
+        name: im-backend-scc
+        runAsUser:
+          type: MustRunAs
+          uid: 1000
+        seLinuxContext:
+          type: MustRunAs
+          level: s0:c123,c456
+        supplementalGroups:
+          type: RunAsAny
+        fsGroup:
+          type: MustRunAs
+          ranges:
+            - min: 1000
+              max: 1000
+    
+    # Audit logging
+    audit:
+      enabled: true
+      level: metadata
+      rules:
+        - level: RequestResponse
+          resources:
+            - group: ""
+              resources: ["secrets"]
+            - group: ""
+              resources: ["configmaps"]
+              namespace: im-system
+          verbs: ["create", "update", "patch", "delete"]
+        
+        - level: Request
+          resources:
+            - group: ""
+              resources: ["pods/exec"]
+            - group: "rbac.authorization.k8s.io"
+              resources: ["roles", "rolebindings", "clusterroles", "clusterrolebindings"]
+          verbs: ["create", "update", "patch", "delete"]
+    
+    # Compliance and governance
+    compliance:
+      # Pod security context
+      podSecurityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      
+      # Container security context
+      containerSecurityContext:
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: true
+        capabilities:
+          drop:
+            - ALL
+        seLinuxOptions:
+          level: "s0:c123,c456"
+      
+      # Resource limits
+      resourceLimits:
+        enabled: true
+        default:
+          requests:
+            cpu: 500m
+            memory: 1Gi
+          limits:
+            cpu: 2
+            memory: 4Gi
+        
+        # Per-container overrides
+        overrides:
+          - container: im-backend
+            requests:
+              cpu: 500m
+              memory: 1Gi
+            limits:
+              cpu: 2
+              memory: 4Gi
+          
+          - container: im-backend-canary
+            requests:
+              cpu: 500m
+              memory: 1Gi
+            limits:
+              cpu: 1
+              memory: 2Gi
+      
+      # Image security
+      imageSecurity:
+        allowedRegistries:
+          - "registry.example.com"
+          - "gcr.io/project-id"
+        scanOnPull: true
+        signatureVerification: true
+        vulnerabilityScanning: true

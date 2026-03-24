@@ -1,0 +1,287 @@
+syntax = "proto3";
+
+package im.user;
+
+option java_multiple_files = true;
+option java_package = "com.im.backend.grpc.user";
+option java_outer_classname = "UserProto";
+
+import "im/common.proto";
+import "google/api/annotations.proto";
+
+// 用户服务
+service UserService {
+  // 用户注册
+  rpc RegisterUser(RegisterUserRequest) returns (RegisterUserResponse) {
+    option (google.api.http) = {
+      post: "/v1/users/register"
+      body: "*"
+    };
+  }
+  
+  // 用户登录
+  rpc LoginUser(LoginUserRequest) returns (LoginUserResponse) {
+    option (google.api.http) = {
+      post: "/v1/users/login"
+      body: "*"
+    };
+  }
+  
+  // 获取用户信息
+  rpc GetUser(GetUserRequest) returns (GetUserResponse) {
+    option (google.api.http) = {
+      get: "/v1/users/{user_id}"
+    };
+  }
+  
+  // 更新用户信息
+  rpc UpdateUser(UpdateUserRequest) returns (UpdateUserResponse) {
+    option (google.api.http) = {
+      put: "/v1/users/{user_id}"
+      body: "*"
+    };
+  }
+  
+  // 搜索用户
+  rpc SearchUsers(SearchUsersRequest) returns (SearchUsersResponse) {
+    option (google.api.http) = {
+      get: "/v1/users/search"
+    };
+  }
+  
+  // 获取用户在线状态
+  rpc GetUserStatus(GetUserStatusRequest) returns (GetUserStatusResponse) {
+    option (google.api.http) = {
+      get: "/v1/users/{user_id}/status"
+    };
+  }
+  
+  // 更新用户在线状态
+  rpc UpdateUserStatus(UpdateUserStatusRequest) returns (UpdateUserStatusResponse) {
+    option (google.api.http) = {
+      put: "/v1/users/{user_id}/status"
+      body: "*"
+    };
+  }
+  
+  // 获取用户统计
+  rpc GetUserStatistics(GetUserStatisticsRequest) returns (GetUserStatisticsResponse) {
+    option (google.api.http) = {
+      get: "/v1/users/statistics"
+    };
+  }
+  
+  // 管理用户 (管理员接口)
+  rpc AdminManageUser(AdminManageUserRequest) returns (AdminManageUserResponse) {
+    option (google.api.http) = {
+      post: "/v1/admin/users/{user_id}/manage"
+      body: "*"
+    };
+  }
+}
+
+// 用户详细实体
+message UserDetail {
+  string user_id = 1;
+  string username = 2;
+  string email = 3;
+  string phone = 4;
+  string nickname = 5;
+  string avatar_url = 6;
+  string signature = 7;
+  im.common.UserStatus status = 8;
+  int64 created_time = 9;
+  int64 last_login_time = 10;
+  int64 last_active_time = 11;
+  im.common.GeoLocation last_location = 12;
+  string device_info = 13;
+  string ip_address = 14;
+  map<string, string> preferences = 15;
+  repeated string roles = 16;
+  repeated string permissions = 17;
+  im.common.Status account_status = 18;
+  string language = 19;
+  string timezone = 20;
+  bool email_verified = 21;
+  bool phone_verified = 22;
+  bool two_factor_enabled = 23;
+  int32 version = 24;
+}
+
+// 用户注册请求
+message RegisterUserRequest {
+  string username = 1;
+  string password = 2;
+  string email = 3;
+  string phone = 4;
+  string nickname = 5;
+  string avatar_url = 6;
+  string language = 7;
+  string timezone = 8;
+  map<string, string> metadata = 9;
+}
+
+// 用户注册响应
+message RegisterUserResponse {
+  im.common.CommonResponse common = 1;
+  UserDetail user = 2;
+  string auth_token = 3;
+  string refresh_token = 4;
+  int64 token_expiry = 5;
+}
+
+// 用户登录请求
+message LoginUserRequest {
+  string identifier = 1; // 用户名/邮箱/手机号
+  string password = 2;
+  string device_id = 3;
+  string device_name = 4;
+  string device_type = 5;
+  string ip_address = 6;
+  bool remember_me = 7;
+  string two_factor_code = 8;
+}
+
+// 用户登录响应
+message LoginUserResponse {
+  im.common.CommonResponse common = 1;
+  UserDetail user = 2;
+  string auth_token = 3;
+  string refresh_token = 4;
+  int64 token_expiry = 5;
+  repeated string active_sessions = 6;
+  bool requires_two_factor = 7;
+}
+
+// 获取用户请求
+message GetUserRequest {
+  string user_id = 1;
+  bool include_sensitive = 2;
+}
+
+// 获取用户响应
+message GetUserResponse {
+  im.common.CommonResponse common = 1;
+  UserDetail user = 2;
+}
+
+// 更新用户请求
+message UpdateUserRequest {
+  string user_id = 1;
+  string nickname = 2;
+  string avatar_url = 3;
+  string signature = 4;
+  string language = 5;
+  string timezone = 6;
+  map<string, string> preferences = 7;
+  bool email_notifications = 8;
+  bool push_notifications = 9;
+  map<string, string> metadata = 10;
+}
+
+// 更新用户响应
+message UpdateUserResponse {
+  im.common.CommonResponse common = 1;
+  UserDetail user = 2;
+}
+
+// 搜索用户请求
+message SearchUsersRequest {
+  string query = 1;
+  int32 page = 2;
+  int32 size = 3;
+  repeated string roles = 4;
+  im.common.UserStatus status = 5;
+  im.common.TimeRange created_range = 6;
+  im.common.TimeRange last_active_range = 7;
+  string sort_by = 8;
+  bool descending = 9;
+}
+
+// 搜索用户响应
+message SearchUsersResponse {
+  im.common.CommonResponse common = 1;
+  repeated im.common.UserBrief users = 2;
+  im.common.PageResponse pagination = 3;
+  int32 total_count = 4;
+}
+
+// 获取用户状态请求
+message GetUserStatusRequest {
+  string user_id = 1;
+}
+
+// 获取用户状态响应
+message GetUserStatusResponse {
+  im.common.CommonResponse common = 1;
+  im.common.UserStatus status = 2;
+  int64 last_active_time = 3;
+  string current_device = 4;
+  bool is_typing = 5;
+  string typing_session = 6;
+}
+
+// 更新用户状态请求
+message UpdateUserStatusRequest {
+  string user_id = 1;
+  im.common.UserStatus status = 2;
+  string status_message = 3;
+  bool broadcast = 4;
+}
+
+// 更新用户状态响应
+message UpdateUserStatusResponse {
+  im.common.CommonResponse common = 1;
+  bool success = 2;
+  int64 updated_time = 3;
+}
+
+// 获取用户统计请求
+message GetUserStatisticsRequest {
+  im.common.TimeRange time_range = 1;
+  string group_by = 2; // day, week, month
+}
+
+// 获取用户统计响应
+message GetUserStatisticsResponse {
+  im.common.CommonResponse common = 1;
+  int32 total_users = 2;
+  int32 active_users = 3;
+  int32 new_users = 4;
+  map<string, int32> daily_registrations = 5;
+  map<string, int32> status_distribution = 6;
+  map<string, int32> device_distribution = 7;
+  map<string, int32> region_distribution = 8;
+  double avg_session_duration = 9;
+  string peak_online_time = 10;
+}
+
+// 管理用户请求 (管理员)
+message AdminManageUserRequest {
+  enum Action {
+    ACTION_UNKNOWN = 0;
+    ACTION_BAN = 1;
+    ACTION_UNBAN = 2;
+    ACTION_DEACTIVATE = 3;
+    ACTION_ACTIVATE = 4;
+    ACTION_RESET_PASSWORD = 5;
+    ACTION_UPDATE_ROLE = 6;
+    ACTION_UPDATE_PERMISSIONS = 7;
+    ACTION_DELETE_ACCOUNT = 8;
+    ACTION_EXPORT_DATA = 9;
+  }
+  
+  string user_id = 1;
+  Action action = 2;
+  map<string, string> parameters = 3;
+  string reason = 4;
+  int64 duration_seconds = 5; // 封禁时长
+}
+
+// 管理用户响应 (管理员)
+message AdminManageUserResponse {
+  im.common.CommonResponse common = 1;
+  bool success = 2;
+  UserDetail user = 3;
+  string action_result = 4;
+}

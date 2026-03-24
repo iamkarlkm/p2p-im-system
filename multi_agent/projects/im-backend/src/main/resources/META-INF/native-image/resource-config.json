@@ -1,0 +1,52 @@
+{
+  "resources": {
+    "includes": [
+      {"pattern": ".*\\.properties$"},
+      {"pattern": ".*\\.xml$"},
+      {"pattern": ".*\\.yml$"},
+      {"pattern": ".*\\.yaml$"},
+      {"pattern": "application.*\\.properties"},
+      {"pattern": "application.*\\.yml"},
+      {"pattern": "META-INF/spring/.*"},
+      {"pattern": "META-INF/spring\\.factories"},
+      {"pattern": "META-INF/spring\\.imports"},
+      {"pattern": "META-INF/services/.*"},
+      {"pattern": "org/springframework/.*"},
+      {"pattern": "org/springframework/boot/autoconfigure/.*"},
+      {"pattern": "org/springframework/boot/ContextIdApplicationContextInitializer"},
+      {"pattern": "com/im/system/.*"},
+      {"pattern": "hibernate.properties"},
+      {"pattern": "javax/persistence/.*"},
+      {"pattern": "org/hibernate/.*"},
+      {"pattern": "org/postgresql/.*"},
+      {"pattern": "com/mysql/.*"},
+      {"pattern": ".*DatabaseBuilder.*"},
+      {"pattern": "org/springframework/security/.*"},
+      {"pattern": "org/springframework/web/.*"},
+      {"pattern": "org/springframework/messaging/.*"},
+      {"pattern": "org/springframework/websocket/.*"},
+      {"pattern": "io/jsonwebtoken/.*"},
+      {"pattern": "com/fasterxml/jackson/.*"},
+      {"pattern": ".*Module.*"},
+      {"pattern": ".*Handler.*"},
+      {"pattern": ".*Interceptor.*"},
+      {"pattern": ".*Converter.*"},
+      {"pattern": ".*Serializer.*"},
+      {"pattern": ".*Deserializer.*"}
+    ],
+    "excludes": [
+      {"pattern": ".*\\.class$"},
+      {"pattern": ".*\\.jar$"},
+      {"pattern": ".*\\.tar$"},
+      {"pattern": ".*\\.gz$"},
+      {"pattern": "META-INF/MANIFEST\\.MF"}
+    ]
+  },
+  "bundles": {
+    "includes": [
+      {"name": "javax.validation.Messages"},
+      {"name": "org.hibernate.validator.ValidationMessages"},
+      {"name": "org.springframework.validation.DefaultMessageCodesResolver"}
+    ]
+  }
+}

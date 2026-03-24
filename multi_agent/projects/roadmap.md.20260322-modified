@@ -1,0 +1,1037 @@
+---
+## 📋 功能转移说明
+*以下功能 (#129-#137) 已于 2026-03-22 04:20 从架构设计转移到功能开发列表*
+*详细功能信息请查看 development_plan.md*
+
+## 🆕 功能 #129: AI增强前端框架与本地推理引擎 (AI-Enhanced Frontend Framework & Local Inference Engine) ⭐ 已转移
+
+**规划时间**: 2026-03-22 01:32
+**转移时间**: 2026-03-22 04:20
+**知识来源**: ai_enhanced_im_system.md (前端AI层：智能回复系统、本地推理) + 现代移动端AI推理最佳实践
+**优先级**: 🔴 HIGH
+**状态**: ✅ 已转移到开发计划
+
+### 功能背景
+现代IM系统需要强大的前端AI能力，但云端AI服务存在延迟和隐私问题。本功能旨在构建一个完整的前端AI框架，支持本地模型推理，实现智能回复建议、消息摘要、情感分析等能力，完全在用户设备上运行，保护隐私的同时提供低延迟体验。
+
+### 功能特性
+- **本地AI推理引擎**: 基于TensorFlow Lite/ONNX Runtime的轻量级推理引擎，支持文本分类、序列标注、序列生成
+- **智能回复系统**: 本地BERT-small模型推理，基于对话上下文生成3-5个候选回复
+- **消息摘要提取**: 轻量级摘要模型（BART-mini），关键信息提取，个性化摘要长度控制
+- **情感实时分析**: 实时分析消息情感（正面/中性/负面），识别紧急/负面情绪
+- **模型动态加载**: 按需加载AI模型，支持模型缓存和版本管理
+- **前端模型压缩**: 模型量化（32bit→8bit）、剪枝、知识蒸馏，减少60%模型体积
+- **离线推理支持**: 网络离线状态下仍然可用AI功能
+- **隐私保护**: 所有AI处理都在本地完成，数据不出设备
+- **性能监控**: 推理延迟、内存使用、模型加载时间实时监控
+- **模型热更新**: 后台静默下载新版本模型，无需应用更新
+
+### 核心文件
+
+**Backend (Java)**:
+- `im-backend/src/main/java/com/im/server/ai/engine/ModelManagementService.java` (~350行)
+  - 模型管理服务：模型版本控制、热更新、分发策略
+- `im-backend/src/main/java/com/im/server/ai/engine/ModelMetadata.java` (~200行)
+  - 模型元数据：版本/大小/准确率/适用设备/下载地址
+- `im-backend/src/main/java/com/im/server/ai/engine/ModelCompressionService.java` (~280行)
+  - 模型压缩服务：量化、剪枝、知识蒸馏优化
+- `im-backend/src/main/java/com/im/server/ai/engine/ModelController.java` (~180行)
+  - REST API：获取可用模型列表、下载地址、版本信息
+
+**Desktop (TypeScript)**:
+- `im-desktop/src/services/ai/InferenceEngine.ts` (~500行)
+  - TypeScript推理引擎：TensorFlow.js集成、模型加载/卸载、推理管道
+- `im-desktop/src/services/ai/LocalReplySuggestion.ts` (~350行)
+  - 本地回复建议服务：上下文获取、意图识别、候选生成
+- `im-desktop/src/services/ai/LocalSummary.ts` (~300行)
+  - 本地摘要服务：关键信息提取、摘要长度控制、实时更新
+- `im-desktop/src/services/ai/ModelManager.ts` (~250行)
+  - 模型管理器：模型下载/缓存/版本管理/内存管理
+- `im-desktop/src/components/ai/AIDebugPanel.ts` (~200行)
+  - AI调试面板：推理延迟/内存/准确率实时显示
+
+**Mobile (Flutter)**:
+- `im-mobile/lib/services/ai/tflite_engine.dart` (~400行)
+  - Flutter TFLite引擎：Android/iOS原生推理、模型集成
+- `im-mobile/lib/services/ai/on_device_inference.dart` (~350行)
+  - 设备端推理服务：内存优化、后台推理、电池管理
+- `im-mobile/lib/widgets/ai/reply_suggestion_local.dart` (~280行)
+  - 本地回复建议UI：触摸优化、手势控制、动画效果
+- `im-mobile/lib/widgets/ai/summary_preview.dart` (~220行)
+  - 摘要预览组件：可折叠摘要、实时更新、交互控制
+
+### 技术实现要点
+- **TensorFlow Lite**: Android/iOS原生推理，支持CPU/GPU/神经处理器（NPU）
+- **ONNX Runtime**: 跨平台推理引擎，Web/桌面/移动端统一架构
+- **模型量化**: 混合精度量化（FP16 + INT8），平衡精度和性能
+- **内存管理**: 按需加载模型分片，LRU缓存策略，内存警告时自动清理
+- **推理管道**: 批处理优化、异步推理、优先级队列
+- **电池优化**: 推理时降低CPU频率、限制后台推理频率
+- **模型更新**: 增量更新、AB测试、灰度发布
+- **隐私框架**: 差分隐私训练数据、本地数据处理、透明化控制
+
+### API 设计
+```
+GET  /api/ai/models/available           - 获取可用模型列表
+GET  /api/ai/models/{modelId}/download - 下载指定模型
+GET  /api/ai/models/{modelId}/metadata - 获取模型元数据
+POST /api/ai/models/feedback           - 提交模型性能反馈
+GET  /api/ai/models/updates            - 检查模型更新
+POST /api/ai/models/{modelId}/report   - 报告模型使用情况
+```
+
+### 性能指标
+- `ai.local_inference.latency_ms` - 本地推理延迟（P50/P95/P99）
+- `ai.local_inference.memory_mb` - 推理内存使用量
+- `ai.local_inference.battery_impact` - 电池影响评估
+- `ai.model_download.success_rate` - 模型下载成功率
+- `ai.model_cache.hit_rate` - 模型缓存命中率
+
+---
+
+## 🆕 功能 #130: 差分隐私与安全AI框架 (Differential Privacy & Secure AI Framework) ⭐ 新增
+
+**规划时间**: 2026-03-22 01:32
+**知识来源**: ai_enhanced_im_system.md (隐私和安全考虑：本地处理优先、差分隐私、透明度控制) + 隐私保护AI最佳实践
+**优先级**: 🔴 HIGH
+**状态**: ✅ 已转移到开发计划
+
+### 功能背景
+AI增强功能需要处理用户敏感数据，隐私保护至关重要。本功能构建一个完整的差分隐私和安全AI框架，确保AI训练数据和用户隐私得到充分保护，同时提供透明度和用户控制。
+
+### 功能特性
+- **差分隐私训练框架**: 在AI模型训练过程中添加拉普拉斯/高斯噪声，保护个体数据
+- **隐私预算管理**: 每个用户/群组的隐私预算分配和消耗跟踪
+- **本地联邦学习**: 设备端模型训练，仅上传模型梯度而非原始数据
+- **安全聚合协议**: 多方安全计算（MPC）聚合模型更新，保护梯度隐私
+- **隐私透明度面板**: 用户可查看AI如何处理其数据、使用了哪些隐私保护机制
+- **隐私控制开关**: 用户可完全关闭AI功能、选择隐私保护级别
+- **数据最小化收集**: 仅收集必要的AI训练数据，自动匿名化敏感信息
+- **隐私影响评估**: 定期评估AI功能对用户隐私的影响
+- **审计日志**: 完整的隐私保护操作审计日志
+- **合规性支持**: 符合GDPR、CCPA、PIPL等隐私法规要求
+
+### 核心文件
+
+**Backend (Java)**:
+- `im-backend/src/main/java/com/im/server/ai/privacy/DifferentialPrivacyService.java` (~400行)
+  - 差分隐私服务：噪声添加、隐私预算计算、敏感性分析
+- `im-backend/src/main/java/com/im/server/ai/privacy/PrivacyBudgetManager.java` (~300行)
+  - 隐私预算管理器：预算分配、消耗跟踪、重置策略
+- `im-backend/src/main/java/com/im/server/ai/privacy/FederatedLearningCoordinator.java` (~350行)
+  - 联邦学习协调器：设备端训练协调、安全聚合、模型分发
+- `im-backend/src/main/java/com/im/server/ai/privacy/SecureAggregation.java` (~320行)
+  - 安全聚合协议：多方安全计算、秘密分享、加密聚合
+- `im-backend/src/main/java/com/im/server/ai/privacy/PrivacyTransparencyService.java` (~280行)
+  - 隐私透明度服务：数据使用说明、隐私保护机制解释
+- `im-backend/src/main/java/com/im/server/ai/privacy/PrivacyAuditLogger.java` (~250行)
+  - 隐私审计日志器：完整操作日志、合规性报告生成
+- `im-backend/src/main/java/com/im/server/ai/privacy/PrivacyController.java` (~220行)
+  - REST API：隐私设置管理、透明度查询、审计日志访问
+
+**Desktop (TypeScript)**:
+- `im-desktop/src/services/ai/PrivacyManager.ts` (~350行)
+  - 隐私管理器：本地隐私设置、透明度信息展示
+- `im-desktop/src/components/privacy/PrivacyDashboard.ts` (~400行)
+  - 隐私仪表板：隐私预算可视化、数据使用图表、控制面板
+- `im-desktop/src/components/privacy/TransparencyReport.ts` (~300行)
+  - 透明度报告：AI数据处理说明、隐私保护机制详解
+
+**Mobile (Flutter)**:
+- `im-mobile/lib/services/ai/privacy_service.dart` (~320行)
+  - 隐私服务：移动端隐私管理、本地设置同步
+- `im-mobile/lib/widgets/privacy/privacy_settings.dart` (~350行)
+  - 隐私设置页面：开关控制、隐私级别选择、透明度信息
+- `im-mobile/lib/widgets/privacy/budget_tracker.dart` (~250行)
+  - 隐私预算跟踪器：实时预算显示、消耗预警、重置选项
+
+### 技术实现要点
+- **差分隐私算法**: 拉普拉斯机制（连续数据）、指数机制（离散数据）、高斯机制（高维数据）
+- **隐私预算ε**: 典型值0.1-10，平衡隐私保护和模型实用性
+- **敏感度计算**: L1/L2敏感度分析，指导噪声量级选择
+- **联邦学习架构**: 客户端本地训练 → 安全梯度上传 → 服务器聚合 → 模型更新分发
+- **安全聚合协议**: 基于Paillier同态加密或Shamir秘密分享
+- **本地差分隐私**: 客户端添加噪声后再上传，增强隐私保护
+- **隐私放大**: 利用随机采样进行隐私预算放大
+- **后处理不变性**: 差分隐私的后处理性质保障
+- **组合定理**: 多次查询的隐私预算累加计算
+- **透明化技术**: 可验证的隐私保护、零知识证明验证
+
+### API 设计
+```
+GET  /api/ai/privacy/settings           - 获取隐私设置
+PUT  /api/ai/privacy/settings           - 更新隐私设置
+GET  /api/ai/privacy/budget             - 获取隐私预算状态
+GET  /api/ai/privacy/transparency       - 获取透明度报告
+GET  /api/ai/privacy/audit-logs         - 获取隐私审计日志
+POST /api/ai/privacy/reset-budget       - 重置隐私预算（管理员）
+GET  /api/ai/privacy/compliance         - 获取合规性报告
+POST /api/ai/privacy/opt-out            - 选择退出AI数据处理
+```
+
+### 安全指标
+- `ai.privacy.budget_remaining` - 剩余隐私预算（平均值）
+- `ai.privacy.noise_added_db` - 添加的噪声强度（分贝）
+- `ai.privacy.federated_participation` - 联邦学习参与设备数
+- `ai.privacy.audit_log_completeness` - 审计日志完整性评分
+- `ai.privacy.user_control_rate` - 用户隐私控制使用率
+
+---
+
+## 🆕 功能 #131: 多模态内容理解引擎 (Multimodal Content Understanding Engine) ⭐ 新增
+
+**规划时间**: 2026-03-22 01:32
+**知识来源**: ai_enhanced_im_system.md (未来发展方向：多模态理解（文本+图像+语音）) + 多模态AI最新进展
+**优先级**: 🟡 MEDIUM
+**状态**: ✅ 已转移到开发计划
+
+### 功能背景
+现代IM通讯不仅包含文本，还有大量图片、语音、视频等多媒体内容。多模态内容理解引擎能够综合理解文本、图像、语音的联合语义，提供更智能的内容分析、分类、搜索和推荐能力。
+
+### 功能特性
+- **统一多模态编码器**: CLIP-like架构，文本和图像共享语义空间
+- **跨模态检索**: 用文本搜索图片、用图片搜索相似图片、用语音搜索相关内容
+- **多模态情感分析**: 结合文本内容、图片情感、语音语调分析综合情感
+- **图像内容理解**: 物体识别、场景识别、文字OCR、人脸检测（可选）
+- **语音内容分析**: 语音转文字、声纹识别、情感语调分析、关键词提取
+- **视频理解能力**: 关键帧提取、动作识别、场景分割、字幕生成
+- **多模态摘要**: 结合文本、图片、语音生成综合摘要
+- **跨模态生成**: 文本生成配图建议、图片生成描述文字
+- **多模态搜索**: 统一搜索接口，支持文本/图片/语音混合查询
+- **实时多模态分析**: 消息发送时实时分析所有媒体内容
+
+### 核心文件
+
+**Backend (Java)**:
+- `im-backend/src/main/java/com/im/server/ai/multimodal/MultimodalEncoder.java` (~450行)
+  - 多模态编码器：统一文本/图像/语音编码、共享语义空间
+- `im-backend/src/main/java/com/im/server/ai/multimodal/CrossModalRetrieval.java` (~380行)
+  - 跨模态检索：文本→图像、图像→文本、语音→内容检索
+- `im-backend/src/main/java/com/im/server/ai/multimodal/ImageUnderstanding.java` (~350行)
+  - 图像理解：YOLO物体检测、场景分类、OCR文字识别
+- `im-backend/src/main/java/com/im/server/ai/multimodal/AudioUnderstanding.java` (~320行)
+  - 语音理解：Whisper语音识别、情感分析、声纹特征提取
+- `im-backend/src/main/java/com/im/server/ai/multimodal/VideoAnalyzer.java` (~400行)
+  - 视频分析：FFmpeg关键帧提取、动作识别、场景分割
+- `im-backend/src/main/java/com/im/server/ai/multimodal/MultimodalSearch.java` (~350行)
+  - 多模态搜索：统一搜索接口、混合查询处理、相关性排序
+- `im-backend/src/main/java/com/im/server/ai/multimodal/MultimodalController.java` (~280行)
+  - REST API：多模态分析、跨模态搜索、内容理解
+
+**Desktop (TypeScript)**:
+- `im-desktop/src/services/ai/multimodal.ts` (~400行)
+  - 多模态服务：客户端媒体分析、本地模型推理
+- `im-desktop/src/components/search/multimodal_search.ts` (~350行)
+  - 多模态搜索组件：混合查询输入、结果可视化
+- `im-desktop/src/components/media/media_understanding.ts` (~300行)
+  - 媒体理解组件：图片/语音/视频内容分析展示
+
+**Mobile (Flutter)**:
+- `im-mobile/lib/services/ai/multimodal.dart` (~380行)
+  - 多模态服务：移动端媒体处理、摄像头/麦克风集成
+- `im-mobile/lib/widgets/search/multimodal_search.dart` (~320行)
+  - 多模态搜索页面：触摸优化搜索、媒体内容预览
+- `im-mobile/lib/widgets/media/media_analysis.dart` (~280行)
+  - 媒体分析组件：实时分析反馈、交互式控制
+
+### 技术实现要点
+- **CLIP架构**: ViT图像编码器 + Transformer文本编码器，对比学习预训练
+- **多任务学习**: 共享主干网络，多个任务头（分类/检测/分割/检索）
+- **知识蒸馏**: 大模型→小模型蒸馏，适合移动端部署
+- **特征融合**: 早期融合/中期融合/晚期融合策略，平衡效果和效率
+- **增量学习**: 新模态/新任务增量学习，避免灾难性遗忘
+- **边缘计算**: 移动端轻量级模型，实时多模态分析
+- **隐私保护**: 敏感内容本地处理、面部模糊化、语音匿名化
+- **缓存优化**: 媒体特征缓存、相似内容去重、增量更新
+- **质量评估**: 多模态理解质量评估指标（mAP/Recall@K/BLEU）
+
+### API 设计
+```
+POST /api/ai/multimodal/analyze         - 分析多媒体内容
+POST /api/ai/multimodal/search          - 多模态搜索
+GET  /api/ai/multimodal/similar/{id}    - 查找相似内容
+POST /api/ai/multimodal/cross-modal     - 跨模态转换（文本↔图像）
+GET  /api/ai/multimodal/features/{id}   - 获取内容特征向量
+POST /api/ai/multimodal/generate        - 跨模态生成（文本生成图像等）
+GET  /api/ai/multimodal/stats           - 获取多模态使用统计
+```
+
+### 性能指标
+- `ai.multimodal.analysis_latency_ms` - 多模态分析延迟
+- `ai.multimodal.cross_modal_accuracy` - 跨模态检索准确率
+- `ai.multimodal.feature_cache_hit_rate` - 特征缓存命中率
+- `ai.multimodal.media_processing_success` - 媒体处理成功率
+- `ai.multimodal.search_relevance_score` - 搜索相关性评分
+
+---
+
+## 🆕 功能 #132: 协作增强AI助手 (Collaboration-Enhanced AI Assistant) ⭐ 新增
+
+**规划时间**: 2026-03-22 01:32
+**知识来源**: ai_enhanced_im_system.md (未来发展方向：协作增强（群聊协调、会议纪要、项目进度跟踪）) + 企业协作AI最佳实践
+**优先级**: 🟡 MEDIUM
+**状态**: ✅ 已转移到开发计划
+
+### 功能背景
+在企业协作场景中，群聊协调、会议纪要、项目跟踪等任务消耗大量人工时间。协作增强AI助手能够自动分析对话内容，提取关键信息，生成会议纪要，跟踪项目进度，协调任务分配，显著提升团队协作效率。
+
+### 功能特性
+- **智能会议纪要**: 实时分析会议对话，自动提取决策、任务、时间点
+- **项目进度跟踪**: 从对话中识别项目相关讨论，自动更新进度状态
+- **任务分配协调**: 识别任务指派（"@张三 请完成这个功能"），自动创建待办事项
+- **智能议程生成**: 会议前基于历史讨论生成会议议程建议
+- **冲突检测与解决**: 检测团队讨论中的意见冲突，提供解决建议
+- **知识库自动构建**: 从讨论中提取技术知识点，自动更新团队知识库
+- **协作模式分析**: 分析团队协作模式，识别沟通瓶颈，提供改进建议
+- **智能提醒系统**: 基于讨论内容设置智能提醒（"下周跟进这个需求"）
+- **跨会话关联**: 关联不同会话中的相关讨论，提供完整上下文
+- **协作度量报告**: 定期生成团队协作效率报告，量化分析改进空间
+
+### 核心文件
+
+**Backend (Java)**:
+- `im-backend/src/main/java/com/im/server/ai/collaboration/MeetingMinuteGenerator.java` (~420行)
+  - 会议纪要生成器：决策提取、任务识别、时间点记录
+- `im-backend/src/main/java/com/im/server/ai/collaboration/ProjectTracker.java` (~380行)
+  - 项目跟踪器：项目识别、进度更新、里程碑跟踪
+- `im-backend/src/main/java/com/im/server/ai/collaboration/TaskCoordinator.java` (~350行)
+  - 任务协调器：任务分配识别、待办事项创建、状态同步
+- `im-backend/src/main/java/com/im/server/ai/collaboration/AgendaGenerator.java` (~320行)
+  - 议程生成器：基于历史生成议程、优先级排序、时间分配
+- `im-backend/src/main/java/com/im/server/ai/collaboration/ConflictDetector.java` (~300行)
+  - 冲突检测器：意见分歧识别、情绪分析、解决建议
+- `im-backend/src/main/java/com/im/server/ai/collaboration/KnowledgeExtractor.java` (~350行)
+  - 知识提取器：技术点提取、知识关联、自动分类
+- `im-backend/src/main/java/com/im/server/ai/collaboration/CollaborationAnalyzer.java` (~400行)
+  - 协作分析器：模式识别、瓶颈检测、改进建议
+- `im-backend/src/main/java/com/im/server/ai/collaboration/CollaborationController.java` (~280行)
+  - REST API：协作分析、报告生成、设置管理
+
+**Desktop (TypeScript)**:
+- `im-desktop/src/services/ai/collaboration.ts` (~450行)
+  - 协作助手服务：实时分析、智能提醒、报告生成
+- `im-desktop/src/components/collaboration/meeting_minutes.ts` (~380行)
+  - 会议纪要组件：实时生成、编辑优化、导出功能
+- `im-desktop/src/components/collaboration/project_dashboard.ts` (~350行)
+  - 项目仪表板：进度可视化、任务分配、时间线
+- `im-desktop/src/components/collaboration/team_analytics.ts` (~320行)
+  - 团队分析组件：协作模式分析、效率报告、改进建议
+
+**Mobile (Flutter)**:
+- `im-mobile/lib/services/ai/collaboration.dart` (~400行)
+  - 协作助手服务：移动端优化、通知集成、快速操作
+- `im-mobile/lib/widgets/collaboration/meeting_summary.dart` (~350行)
+  - 会议摘要组件：简洁展示、关键信息突出、一键分享
+- `im-mobile/lib/widgets/collaboration/task_list.dart` (~320行)
+  - 任务列表组件：任务管理、状态更新、提醒设置
+- `im-mobile/lib/widgets/collaboration/team_insights.dart` (~280行)
+  - 团队洞察组件：移动端优化展示、触控交互、即时反馈
+
+### 技术实现要点
+- **信息提取模型**: BERT/ERNIE微调，识别决策/任务/时间/责任方
+- **关系抽取**: 实体关系识别，建立任务-负责人-时间-状态关联
+- **时间线构建**: 基于时间信息构建项目时间线，可视化进度
+- **情感-内容关联**: 结合情感分析和内容理解，识别真实意图
+- **多轮对话理解**: 跨消息的连贯性分析，理解完整讨论脉络
+- **知识图谱构建**: 构建团队协作知识图谱，支持复杂查询
+- **个性化适应**: 学习团队协作习惯，个性化调整分析策略
+- **隐私边界**: 企业数据隔离，不跨组织泄露协作信息
+- **实时性优化**: 流式处理，新消息到达即时更新分析结果
+- **可解释性**: 提供分析依据，增强用户信任和接受度
+
+### API 设计
+```
+POST /api/ai/collaboration/analyze-session - 分析会话协作内容
+GET  /api/ai/collaboration/meeting/{id}   - 获取会议纪要
+POST /api/ai/collaboration/project        - 创建/更新项目跟踪
+GET  /api/ai/collaboration/tasks          - 获取协作任务列表
+POST /api/ai/collaboration/agenda         - 生成会议议程
+GET  /api/ai/collaboration/conflicts      - 获取冲突检测结果
+POST /api/ai/collaboration/knowledge      - 提取知识条目
+GET  /api/ai/collaboration/report         - 获取协作效率报告
+POST /api/ai/collaboration/settings       - 更新协作助手设置
+```
+
+### 效率指标
+- `ai.collaboration.meeting_minute_accuracy` - 会议纪要准确性评分
+- `ai.collaboration.task_extraction_rate` - 任务提取率
+- `ai.collaboration.time_saved_minutes` - 估算节省时间（分钟/周）
+- `ai.collaboration.conflict_resolution_rate` - 冲突解决成功率
+- `ai.collaboration.user_adoption_rate` - 用户采纳使用率
+
+---
+
+## 🆕 功能 #133: 基于深度学习的情感分析系统 (Deep Learning Sentiment Analysis System) ⭐ 新增
+
+**规划时间**: 2026-03-22 03:32
+**知识来源**: ai_enhanced_im_system.md (内容理解和分类：情感分析/自动标签/多媒体理解) + BERT/ERNIE情感分类最佳实践
+**优先级**: 🔴 HIGH
+**状态**: ✅ 已转移到开发计划
+
+### 功能背景
+消息情感分析是理解用户情绪、检测紧急情况、提供个性化服务的关键。传统情感分析基于规则和简单ML模型，准确率有限。本功能采用基于Transformer的深度学习模型，实现细粒度情感分析，支持实时消息情感检测、情感趋势分析和预警。
+
+### 功能特性
+- **多标签情感分类**: 支持积极/消极/中性/愤怒/喜悦/悲伤/恐惧/惊讶8种基础情感
+- **细粒度情绪识别**: 细粒度情感识别（如：轻微不满意→强烈愤怒）
+- **上下文感知分析**: 基于对话上下文综合判断，而非单条消息孤立分析
+- **实时情感检测**: 消息到达时实时分析，延迟<100ms
+- **情感趋势分析**: 按会话/用户/时间窗口分析情感变化趋势
+- **紧急情绪预警**: 检测到强烈负面情绪时自动提醒关注（如：愤怒指数>0.8）
+- **多模态情感融合**: 结合文本+表情符号+语音语调综合判断情感
+- **个性化情感基线**: 基于用户历史建立情感基线，识别异常情绪波动
+- **情感可视化**: 消息流情感色彩标注，会话情感热力图展示
+- **离线情感模型**: 本地轻量级情感模型支持离线情感分析
+
+### 核心文件
+
+**Backend (Java)**:
+- `im-backend/src/main/java/com/im/server/ai/sentiment/SentimentAnalysisService.java` (~400行)
+  - 情感分析服务：BERT模型推理、情感分类、置信度计算
+- `im-backend/src/main/java/com/im/server/ai/sentiment/EmotionTrendAnalyzer.java` (~300行)
+  - 情感趋势分析：时间序列分析、异常检测、情感波动识别
+- `im-backend/src/main/java/com/im/server/ai/sentiment/EmergencyAlertService.java` (~250行)
+  - 紧急预警服务：负面情绪检测、预警规则配置、通知推送
+- `im-backend/src/main/java/com/im/server/ai/sentiment/SentimentVisualizer.java` (~200行)
+  - 情感可视化服务：生成情感热力图、趋势图表、情绪报告
+- `im-backend/src/main/java/com/im/server/ai/sentiment/MultimodalFusion.java` (~350行)
+  - 多模态情感融合：文本+表情+语音综合情感分析
+
+**Desktop (TypeScript)**:
+- `im-desktop/src/services/ai/SentimentClient.ts` (~300行)
+  - 客户端情感分析：轻量模型、实时显示、本地缓存
+- `im-desktop/src/components/sentiment/SentimentHeatmap.ts` (~250行)
+  - 情感热力图组件：会话情感可视化、颜色编码、交互控制
+- `im-desktop/src/components/sentiment/EmotionTrendChart.ts` (~200行)
+  - 情感趋势图：时间序列图表、异常点标记、趋势线
+
+**Mobile (Flutter)**:
+- `im-mobile/lib/services/ai/sentiment_analysis.dart` (~350行)
+  - Flutter情感分析：TFLite模型集成、本地推理、UI反馈
+- `im-mobile/lib/widgets/sentiment/emotion_indicator.dart` (~180行)
+  - 情感指示器：消息情感图标、颜色编码、点击详情
+
+**AI Models**:
+- `ai-models/sentiment/bert-base-sentiment` - 基础情感BERT模型
+- `ai-models/sentiment/emotion-classifier` - 细粒度情绪分类模型
+- `ai-models/sentiment/lightweight-tflite` - 移动端轻量模型
+- `ai-models/sentiment/multimodal-fusion` - 多模态融合模型
+
+### API 设计
+```
+POST /api/ai/sentiment/analyze        - 分析单条消息情感
+POST /api/ai/sentiment/batch-analyze  - 批量分析多条消息
+GET  /api/ai/sentiment/trend/{id}     - 获取会话情感趋势
+GET  /api/ai/sentiment/heatmap        - 生成情感热力图
+POST /api/ai/sentiment/config         - 配置情感分析参数
+GET  /api/ai/sentiment/alerts         - 获取情感预警列表
+POST /api/ai/sentiment/emergency      - 手动标记紧急情绪
+```
+
+### 准确率指标
+- `ai.sentiment.accuracy_overall` - 总体分类准确率
+- `ai.sentiment.recall_emergency` - 紧急情绪召回率
+- `ai.sentiment.latency_p99` - P99延迟（目标<100ms）
+- `ai.sentiment.false_positive_rate` - 误报率
+- `ai.sentiment.user_feedback_score` - 用户反馈评分
+
+---
+
+## 🆕 功能 #134: 智能消息摘要服务 (Intelligent Message Summary Service) ⭐ 新增
+
+**规划时间**: 2026-03-22 03:32
+**知识来源**: ai_enhanced_im_system.md (实时消息摘要：轻量级摘要模型/关键信息提取/个性化摘要) + BART/T5摘要模型最佳实践
+**优先级**: 🔴 HIGH
+**状态**: ✅ 已转移到开发计划
+
+### 功能背景
+在群聊或高流量会话中，用户可能错过重要消息。智能消息摘要服务自动提取对话关键信息，生成简洁摘要，帮助用户快速理解核心内容。支持个性化摘要长度和内容偏好，平衡信息量和可读性。
+
+### 功能特性
+- **轻量级摘要模型**: 基于BART-mini/T5-small的摘要模型，模型大小<100MB
+- **关键信息提取**: 提取时间/地点/决策/行动项/责任人等结构化信息
+- **个性化摘要**: 用户自定义摘要长度（短/中/长）、内容密度（简洁/详细）
+- **多会话摘要**: 支持多个会话的聚合摘要，展示整体概览
+- **实时摘要更新**: 新消息到达时增量更新摘要，而非重新生成
+- **摘要版本历史**: 保存历史摘要版本，支持对比查看变化
+- **离线摘要生成**: 客户端轻量模型支持离线生成摘要
+- **摘要质量评分**: 基于ROUGE/BLEU指标自动评估摘要质量
+- **摘要分享**: 支持将摘要分享给其他用户或导出为文本
+- **摘要模板系统**: 可配置摘要模板（会议纪要/项目更新/讨论总结）
+
+### 核心文件
+
+**Backend (Java)**:
+- `im-backend/src/main/java/com/im/server/ai/summary/MessageSummaryService.java` (~450行)
+  - 消息摘要服务：摘要生成、关键信息提取、质量评估
+- `im-backend/src/main/java/com/im/server/ai/summary/KeyInformationExtractor.java` (~350行)
+  - 关键信息提取：命名实体识别、关系提取、信息结构化
+- `im-backend/src/main/java/com/im/server/ai/summary/IncrementalSummarizer.java` (~300行)
+  - 增量摘要器：增量更新摘要、变化检测、版本管理
+- `im-backend/src/main/java/com/im/server/ai/summary/PersonalizedSummary.java` (~280行)
+  - 个性化摘要：用户偏好学习、模板适配、风格调整
+- `im-backend/src/main/java/com/im/server/ai/summary/SummaryQualityEvaluator.java` (~250行)
+  - 摘要质量评估：ROUGE/BLEU计算、人工评估接口
+
+**Desktop (TypeScript)**:
+- `im-desktop/src/services/ai/SummaryService.ts` (~400行)
+  - 摘要服务：摘要请求、缓存管理、UI集成
+- `im-desktop/src/components/summary/SummaryPanel.ts` (~300行)
+  - 摘要面板：摘要展示、编辑、分享、历史查看
+- `im-desktop/src/components/summary/SummaryEditor.ts` (~250行)
+  - 摘要编辑器：手动编辑摘要、添加注释、格式调整
+
+**Mobile (Flutter)**:
+- `im-mobile/lib/services/ai/summary_service.dart` (~350行)
+  - Flutter摘要服务：本地摘要生成、偏好设置、离线支持
+- `im-mobile/lib/widgets/summary/summary_card.dart` (~200行)
+  - 摘要卡片：摘要预览、展开/收起、操作菜单
+
+**AI Models**:
+- `ai-models/summary/bart-mini-summary` - BART小型摘要模型
+- `ai-models/summary/key-info-extractor` - 关键信息提取模型
+- `ai-models/summary/incremental-summary` - 增量摘要模型
+- `ai-models/summary/multilingual-summary` - 多语言摘要模型
+
+### API 设计
+```
+POST /api/ai/summary/generate      - 生成会话摘要
+GET  /api/ai/summary/{id}          - 获取摘要详情
+POST /api/ai/summary/update        - 增量更新摘要
+GET  /api/ai/summary/history/{id}  - 获取摘要历史版本
+POST /api/ai/summary/evaluate      - 评估摘要质量
+GET  /api/ai/summary/templates     - 获取摘要模板列表
+POST /api/ai/summary/preferences   - 更新摘要偏好设置
+GET  /api/ai/summary/key-info      - 提取关键结构化信息
+```
+
+### 质量指标
+- `ai.summary.rouge_score` - ROUGE-1/2/L平均分
+- `ai.summary.generation_time` - 摘要生成时间
+- `ai.summary.user_satisfaction` - 用户满意度调查
+- `ai.summary.key_info_extraction_rate` - 关键信息提取率
+- `ai.summary.offline_success_rate` - 离线摘要成功率
+
+---
+
+## 🆕 功能 #135: 上下文感知的智能回复生成器 (Context-Aware Smart Reply Generator) ⭐ 新增
+
+**规划时间**: 2026-03-22 03:32
+**知识来源**: ai_enhanced_im_system.md (智能回复建议：意图识别→上下文分析→回复生成→排序展示) + GPT对话生成最佳实践
+**优先级**: 🔴 HIGH
+**状态**: ✅ 已转移到开发计划
+
+### 功能背景
+智能回复功能可显著提升消息回复效率，特别是在移动端输入不便的场景。传统回复建议基于简单规则或模板，缺乏上下文理解。本功能采用基于Transformer的生成式模型，结合意图识别和上下文分析，生成自然、贴切、多样化的回复建议。
+
+### 功能特性
+- **意图识别引擎**: 识别用户消息意图（问候/问题/请求/分享/调侃/感谢等）
+- **上下文记忆**: 记忆最近N条对话历史（可配置），生成连贯回复
+- **多候选生成**: 每次生成3-5个候选回复，覆盖不同意图和风格
+- **个性化语言风格**: 学习用户历史语言风格，生成符合用户习惯的回复
+- **表情符号智能推荐**: 根据语义推荐合适的表情符号
+- **流式生成**: 候选回复逐字生成（打字机效果），减少感知延迟
+- **反馈学习**: 用户选择/忽略/手动输入作为隐式反馈，持续优化
+- **安全过滤**: 生成内容经过敏感词过滤和安全检查
+- **企业私有化部署**: 支持本地LLM（Llama3/Qwen2）推理，保护对话隐私
+- **弱网络降级**: 网络差时降级为模板匹配模式，保证基础可用性
+
+### 核心文件
+
+**Backend (Java)**:
+- `im-backend/src/main/java/com/im/server/ai/reply/SmartReplyService.java` (~500行)
+  - 智能回复服务：意图识别、上下文分析、回复生成
+- `im-backend/src/main/java/com/im/server/ai/reply/IntentClassifier.java` (~350行)
+  - 意图分类器：多意图分类、置信度计算、意图组合
+- `im-backend/src/main/java/com/im/server/ai/reply/ContextMemory.java` (~300行)
+  - 上下文记忆：对话历史管理、重要信息提取、记忆更新
+- `im-backend/src/main/java/com/im/server/ai/reply/ReplyGenerator.java` (~400行)
+  - 回复生成器：生成式模型推理、候选生成、多样性控制
+- `im-backend/src/main/java/com/im/server/ai/reply/EmojiRecommender.java` (~250行)
+  - 表情推荐器：语义-表情映射、个性化推荐、频率控制
+
+**Desktop (TypeScript)**:
+- `im-desktop/src/services/ai/SmartReplyService.ts` (~450行)
+  - 前端回复服务：流式接收、UI集成、用户反馈收集
+- `im-desktop/src/components/ai/SmartReplyPanel.ts` (~350行)
+  - 智能回复面板：候选展示、选择反馈、样式定制
+- `im-desktop/src/components/ai/ReplyTraining.ts` (~250行)
+  - 回复训练界面：显式反馈收集、风格偏好设置
+
+**Mobile (Flutter)**:
+- `im-mobile/lib/services/ai/smart_reply.dart` (~400行)
+  - Flutter智能回复：本地轻量模型、移动端优化、手势交互
+- `im-mobile/lib/widgets/ai/smart_reply_bubble.dart` (~220行)
+  - 智能回复气泡：候选展示、滑动选择、动画效果
+
+**AI Models**:
+- `ai-models/reply/intent-classifier` - 意图分类模型
+- `ai-models/reply/context-encoder` - 上下文编码模型
+- `ai-models/reply/reply-generator` - 回复生成模型
+- `ai-models/reply/lightweight-mobile` - 移动端轻量模型
+
+### API 设计
+```
+POST /api/ai/reply/generate     - 生成智能回复建议
+GET  /api/ai/reply/intents      - 获取意图分类结果
+POST /api/ai/reply/feedback     - 提交用户反馈
+GET  /api/ai/reply/statistics   - 获取使用统计
+POST /api/ai/reply/train        - 触发模型训练
+GET  /api/ai/reply/config       - 获取配置参数
+POST /api/ai/reply/emoji        - 获取表情推荐
+GET  /api/ai/reply/history      - 获取历史建议记录
+```
+
+### 效果指标
+- `ai.reply.acceptance_rate` - 用户采纳率（选择建议比例）
+- `ai.reply.generation_latency` - 生成延迟P95（目标<500ms）
+- `ai.reply.diversity_score` - 候选多样性评分
+- `ai.reply.context_accuracy` - 上下文理解准确率
+- `ai.reply.user_satisfaction` - 用户满意度评分
+
+---
+
+## 🆕 功能 #136: 自适应内容分类引擎 (Adaptive Content Classification Engine) ⭐ 新增
+
+**规划时间**: 2026-03-22 03:32
+**知识来源**: ai_enhanced_im_system.md (内容理解和分类：自动标签/情感分析/多媒体理解) + 自适应机器学习最佳实践
+**优先级**: 🟡 MEDIUM
+**状态**: ✅ 已转移到开发计划
+
+### 功能背景
+消息内容自动分类可帮助用户组织对话、快速检索、设置自动化规则。传统分类系统基于固定类别，难以适应不同用户和场景需求。自适应内容分类引擎支持自定义类别、增量学习、多语言分类，能够根据用户反馈持续优化分类准确性。
+
+### 功能特性
+- **自定义分类体系**: 用户/企业可自定义分类类别和层级结构
+- **增量学习能力**: 基于用户标注持续优化分类模型，无需重新训练
+- **多模态分类**: 支持文本、图片、语音、视频多模态内容分类
+- **多语言支持**: 支持中文/英文/日文/韩文等多语言内容分类
+- **上下文增强分类**: 结合对话上下文提高分类准确性
+- **自动标签推荐**: 新消息自动推荐最可能的3个标签
+- **分类置信度**: 提供分类置信度评分，低置信度时请求人工确认
+- **分类规则引擎**: 支持基于关键词/正则/模式匹配的规则分类
+- **分类质量评估**: 定期评估分类准确性，识别待优化类别
+- **分类迁移学习**: 预训练模型基础上微调，减少标注数据需求
+
+### 核心文件
+
+**Backend (Java)**:
+- `im-backend/src/main/java/com/im/server/ai/classification/ContentClassifier.java` (~450行)
+  - 内容分类器：多模态分类、置信度计算、增量学习
+- `im-backend/src/main/java/com/im/server/ai/classification/CategoryManager.java` (~350行)
+  - 分类体系管理：类别CRUD、层级结构、权限控制
+- `im-backend/src/main/java/com/im/server/ai/classification/IncrementalLearner.java` (~300行)
+  - 增量学习器：在线学习、模型更新、灾难恢复
+- `im-backend/src/main/java/com/im/server/ai/classification/MultimodalClassifier.java` (~400行)
+  - 多模态分类器：文本+图像+语音联合分类
+- `im-backend/src/main/java/com/im/server/ai/classification/RuleEngine.java` (~350行)
+  - 规则引擎：规则定义、执行、优先级调度
+
+**Desktop (TypeScript)**:
+- `im-desktop/src/services/ai/ClassificationService.ts` (~400行)
+  - 分类服务：标签推荐、用户标注、分类检索
+- `im-desktop/src/components/classification/TagManager.ts` (~300行)
+  - 标签管理器：类别管理、标签分配、批量操作
+- `im-desktop/src/components/classification/ClassificationDashboard.ts` (~250行)
+  - 分类仪表盘：分类统计、质量评估、优化建议
+
+**Mobile (Flutter)**:
+- `im-mobile/lib/services/ai/content_classifier.dart` (~380行)
+  - Flutter内容分类：本地分类、离线标注、同步管理
+- `im-mobile/lib/widgets/classification/tag_suggestor.dart` (~200行)
+  - 标签推荐组件：标签展示、快速选择、反馈收集
+
+**AI Models**:
+- `ai-models/classification/multimodal-base` - 多模态基础分类模型
+- `ai-models/classification/incremental-learner` - 增量学习模型
+- `ai-models/classification/multilingual-classifier` - 多语言分类模型
+- `ai-models/classification/domain-adaptation` - 领域自适应模型
+
+### API 设计
+```
+POST /api/ai/classification/predict   - 预测内容分类
+POST /api/ai/classification/train     - 触发增量训练
+GET  /api/ai/classification/categories - 获取分类体系
+POST /api/ai/classification/category  - 创建/更新分类类别
+GET  /api/ai/classification/stats     - 获取分类统计
+POST /api/ai/classification/feedback  - 提交分类反馈
+GET  /api/ai/classification/quality   - 评估分类质量
+POST /api/ai/classification/rules     - 管理分类规则
+GET  /api/ai/classification/history   - 获取分类历史
+```
+
+### 性能指标
+- `ai.classification.accuracy_overall` - 总体分类准确率
+- `ai.classification.incremental_learning_speed` - 增量学习速度
+- `ai.classification.multimodal_fusion_accuracy` - 多模态融合准确率
+- `ai.classification.user_labeling_rate` - 用户标注率
+- `ai.classification.rule_coverage` - 规则覆盖率
+
+---
+
+## 🆕 功能 #137: 多模态AI推理管道 (Multimodal AI Inference Pipeline) ⭐ 新增
+
+**规划时间**: 2026-03-22 03:32
+**知识来源**: ai_enhanced_im_system.md (多模态理解：结合文本/图像/语音的综合理解/跨模态知识关联) + CLIP/BLIP多模态模型最佳实践
+**优先级**: 🟡 MEDIUM
+**状态**: ✅ 已转移到开发计划
+
+### 功能背景
+现代IM消息包含文本、图片、语音、视频等多种形式，单一模态AI无法完整理解消息含义。多模态AI推理管道整合文本、视觉、听觉信息，实现统一的理解和推理，支持跨模态搜索、内容理解、智能推荐等高级功能。
+
+### 功能特性
+- **统一多模态编码器**: CLIP/BLIP风格统一编码，文本和图像映射到同一语义空间
+- **跨模态检索**: 用文本搜索图片/语音，用图片搜索相关对话
+- **多模态内容理解**: 理解"图片中的文字"+"语音转文字"+"文本描述"的综合含义
+- **视觉问答(VQA)**: 回答关于图片内容的问题（如："图片中有几个人？"）
+- **音频情感分析**: 结合语音内容和语调分析说话者情绪
+- **视频内容解析**: 提取视频关键帧、OCR文字、语音转写综合理解
+- **多模态摘要生成**: 结合文本+图片生成综合摘要
+- **跨模态关联挖掘**: 发现文本描述和视觉内容的隐含关联
+- **多模态安全审核**: 结合文字+图片+语音综合判断内容安全性
+- **边缘多模态推理**: 移动端轻量多模态模型支持本地推理
+
+### 核心文件
+
+**Backend (Java)**:
+- `im-backend/src/main/java/com/im/server/ai/multimodal/MultimodalPipeline.java` (~500行)
+  - 多模态管道：模态识别、编码对齐、融合推理
+- `im-backend/src/main/java/com/im/server/ai/multimodal/UnifiedEncoder.java` (~450行)
+  - 统一编码器：文本/图像/语音统一编码到语义空间
+- `im-backend/src/main/java/com/im/server/ai/multimodal/CrossModalRetriever.java` (~400行)
+  - 跨模态检索：文本→图像、图像→文本、语音→文本检索
+- `im-backend/src/main/java/com/im/server/ai/multimodal/VisualQuestionAnswering.java` (~350行)
+  - 视觉问答：图片内容理解、问题解析、答案生成
+- `im-backend/src/main/java/com/im/server/ai/multimodal/AudioVisualFusion.java` (~300行)
+  - 音视频融合：语音+视频联合分析、情感识别、内容理解
+
+**Desktop (TypeScript)**:
+- `im-desktop/src/services/ai/MultimodalService.ts` (~450行)
+  - 多模态服务：文件解析、模态检测、统一处理
+- `im-desktop/src/components/multimodal/CrossModalSearch.ts` (~350行)
+  - 跨模态搜索：文本/图像/语音混合搜索界面
+- `im-desktop/src/components/multimodal/VisualQAPanel.ts` (~300行)
+  - 视觉问答面板：图片提问、答案展示、交互探索
+
+**Mobile (Flutter)**:
+- `im-mobile/lib/services/ai/multimodal_engine.dart` (~420行)
+  - Flutter多模态引擎：移动端优化、硬件加速、离线支持
+- `im-mobile/lib/widgets/multimodal/media_analyzer.dart` (~250行)
+  - 媒体分析器：图片/语音/视频实时分析显示
+
+**AI Models**:
+- `ai-models/multimodal/clip-style` - CLIP风格多模态模型
+- `ai-models/multimodal/blip-style` - BLIP风格视觉语言模型
+- `ai-models/multimodal/audio-visual` - 音视频融合模型
+- `ai-models/multimodal/lightweight-mobile` - 移动端轻量模型
+
+### API 设计
+```
+POST /api/ai/multimodal/encode      - 统一编码多模态内容
+POST /api/ai/multimodal/search      - 跨模态搜索
+POST /api/ai/multimodal/vqa         - 视觉问答
+POST /api/ai/multimodal/analyze     - 多模态内容分析
+GET  /api/ai/multimodal/cross-ref   - 获取跨模态关联
+POST /api/ai/multimodal/fuse        - 多模态信息融合
+GET  /api/ai/multimodal/capabilities - 获取支持的能力
+POST /api/ai/multimodal/stream      - 流式多模态处理
+```
+
+### 能力指标
+- `ai.multimodal.cross_modal_retrieval_recall` - 跨模态检索召回率
+- `ai.multimodal.vqa_accuracy` - 视觉问答准确率
+- `ai.multimodal.fusion_quality` - 多模态融合质量评分
+- `ai.multimodal.latency_p95` - P95处理延迟
+- `ai.multimodal.modal_coverage` - 支持的模态覆盖率
+
+---
+
+## 第二十五阶段 - 边缘计算架构与优化 (Edge Computing Architecture & Optimization)
+
+### 🚀 边缘计算架构整合
+**将边缘计算技术整合到即时通讯系统中，降低延迟、提高可靠性、优化带宽使用，并实现更好的用户体验。**
+
+---
+
+### 功能 #138: 边缘计算消息路由层 (Edge Message Routing Layer) 🔴 HIGH
+**构建分层边缘计算架构，将消息路由、状态同步、媒体缓存等实时计算任务下沉到靠近用户的边缘节点。**
+
+#### 核心特性
+- **三层架构设计**: 
+  1. **核心层**：中心数据中心，负责用户管理、数据持久化、全局路由
+  2. **区域层**：区域性边缘节点，负责区域内用户的消息路由
+  3. **边缘层**：本地边缘节点，靠近终端用户，处理实时消息转发
+- **边缘节点部署**: 基于Kubernetes的边缘节点容器化部署，使用轻量级Kubernetes发行版（K3s/MicroK8s）
+- **地理位置路由算法**: 基于用户IP/地理位置自动选择最近边缘节点，降低端到端延迟（目标：P95延迟<50ms）
+- **WebSocket边缘接入**: WebSocket连接在最近边缘节点终止，TLS握手加速
+- **动态负载均衡**: 基于边缘节点负载、网络延迟、带宽预测动态调整路由策略
+- **故障转移机制**: 边缘节点故障时自动切换到备用节点，支持无缝切换
+- **边缘缓存策略**: 热门聊天记录、用户在线状态、媒体内容在边缘节点缓存
+
+#### 技术架构
+**Backend (Java)**:
+- `im-backend/src/main/java/com/im/server/edge/EdgeMessageRouter.java` (~450行)
+  - 边缘消息路由算法：地理位置路由、负载感知路由、故障转移路由
+- `im-backend/src/main/java/com/im/server/edge/EdgeNodeManager.java` (~400行)
+  - 边缘节点管理：注册/发现/健康检查/负载监控
+- `im-backend/src/main/java/com/im/server/edge/GeoLocationService.java` (~350行)
+  - 地理位置服务：IP地理位置映射、路由决策计算
+- `im-backend/src/main/java/com/im/server/edge/EdgeWebSocketGateway.java` (~300行)
+  - 边缘WebSocket网关：边缘节点WebSocket连接管理
+
+**Edge Nodes (Go)**:
+- `edge-nodes/edge-gateway/main.go` (~500行)
+  - 边缘网关：消息路由转发、边缘缓存、连接管理
+- `edge-nodes/edge-agent/agent.go` (~350行)
+  - 边缘代理：节点健康报告、配置管理、Metrics上报
+
+**Infrastructure**:
+- `infra/kubernetes/edge/edge-deployment.yaml` - 边缘节点Kubernetes部署配置
+- `infra/kubernetes/edge/edge-service.yaml` - 边缘节点Service配置
+- `infra/terraform/edge-node/main.tf` - 边缘节点基础设施代码
+
+#### API设计
+```
+POST   /api/edge/routes             - 计算最优边缘路由
+GET    /api/edge/nodes/health       - 获取边缘节点健康状态
+GET    /api/edge/nodes/{nodeId}/metrics - 获取边缘节点性能指标
+POST   /api/edge/cache/{conversationId} - 缓存指定会话数据
+DELETE /api/edge/cache/{conversationId} - 清除边缘缓存
+POST   /api/edge/users/{userId}/migrate - 迁移用户到新边缘节点
+GET    /api/edge/location/{ip}      - 获取IP地理位置信息
+```
+
+#### 性能指标
+- `edge.routing.latency_p50_p95_p99` - 边缘路由延迟分布
+- `edge.nodes.active_count` - 活跃边缘节点数
+- `edge.cache.hit_rate` - 边缘缓存命中率
+- `edge.traffic.bytes_in_out` - 边缘节点流量统计
+- `edge.failover.count` - 边缘故障转移次数
+
+---
+
+### 功能 #139: 边缘媒体内容分发系统 (Edge Media Content Delivery System) 🔴 HIGH
+**在边缘节点缓存和分发图片、视频、音频等媒体内容，减少中心服务器压力，提升用户体验。**
+
+#### 核心特性
+- **边缘媒体缓存**: 热门图片/视频在边缘节点CDN缓存，用户从最近节点拉取
+- **自适应码率流**: 根据用户网络状况提供不同码率媒体（1080p/720p/480p/360p）
+- **预加载策略**: 智能预测用户可能查看的媒体内容，提前在边缘节点缓存
+- **媒体分片传输**: 大媒体文件分片缓存和传输，支持断点续传
+- **版权保护**: 边缘缓存DRM支持，防止未授权分发
+- **媒体压缩优化**: 边缘节点实时媒体转码压缩，节省带宽
+- **跨边缘节点同步**: 媒体内容在不同边缘节点间同步缓存
+- **智能缓存淘汰**: LRU+访问频率+热度加权缓存淘汰算法
+
+#### 技术架构
+**Backend (Java)**:
+- `im-backend/src/main/java/com/im/server/media/EdgeMediaCache.java` (~500行)
+  - 边缘媒体缓存管理：缓存策略、淘汰算法、同步机制
+- `im-backend/src/main/java/com/im/server/media/AdaptiveBitrateStreamer.java` (~450行)
+  - 自适应码率流处理：网络感知码率调整、分片生成
+- `im-backend/src/main/java/com/im/server/media/MediaTranscoder.java` (~400行)
+  - 媒体转码服务：图片压缩、视频转码、音频处理
+
+**CDN/Edge (Go)**:
+- `edge-nodes/media-cache/main.go` (~600行)
+  - 媒体缓存服务器：HTTP/HTTPS媒体服务、缓存管理
+- `edge-nodes/media-transcoder/transcoder.go` (~450行)
+  - 媒体转码器：FFmpeg集成、实时转码、格式转换
+
+#### API设计
+```
+GET    /api/media/{mediaId}         - 获取媒体内容（智能路由到最近边缘节点）
+POST   /api/media/preload           - 预加载指定媒体到边缘缓存
+DELETE /api/media/cache/{mediaId}   - 清除边缘媒体缓存
+GET    /api/media/stats             - 获取媒体分发统计
+POST   /api/media/transcode         - 请求媒体转码
+GET    /api/media/cdn/nodes         - 获取CDN边缘节点列表
+```
+
+#### 性能指标
+- `edge.media.cache_hit_rate` - 边缘媒体缓存命中率
+- `edge.media.download_latency` - 媒体下载延迟
+- `edge.media.bandwidth_saved` - 节省的带宽总量
+- `edge.media.transcoding_throughput` - 转码吞吐量
+- `edge.media.cdn_traffic` - CDN流量分布
+
+---
+
+### 功能 #140: 边缘计算状态同步引擎 (Edge State Synchronization Engine) 🔴 HIGH
+**在边缘节点处理用户在线状态、消息已读状态、会话列表等实时状态同步，减少中心服务器实时计算压力。**
+
+#### 核心特性
+- **边缘状态管理**: 用户在线状态、消息已读状态、输入状态等实时状态在边缘节点计算
+- **最终一致性设计**: 边缘状态异步同步到中心，保证最终一致性
+- **状态变化传播**: 状态变化事件通过边缘节点间pub/sub系统传播
+- **冲突解决策略**: 多边缘节点状态更新冲突基于时间戳/版本号解决
+- **状态聚合**: 多个用户状态变化合并为批量更新，减少同步频率
+- **状态预计算**: 基于用户行为预测可能的状态变化，提前计算
+- **状态缓存**: 活跃用户状态在边缘节点内存缓存，毫秒级响应
+- **状态审计**: 完整的状态变更日志，支持调试和问题追溯
+
+#### 技术架构
+**Backend (Java)**:
+- `im-backend/src/main/java/com/im/server/state/EdgeStateManager.java` (~550行)
+  - 边缘状态管理器：状态计算、同步、冲突解决
+- `im-backend/src/main/java/com/im/server/state/StatePropagator.java` (~450行)
+  - 状态传播器：边缘节点间状态变更传播
+- `im-backend/src/main/java/com/im/server/state/StateConsistencyChecker.java` (~400行)
+  - 状态一致性检查：定期检查边缘与中心状态一致性
+- `im-backend/src/main/java/com/im/server/state/StateConflictResolver.java` (~350行)
+  - 状态冲突解决器：多节点状态冲突解决算法
+
+**Edge Nodes (Go)**:
+- `edge-nodes/state-sync/main.go` (~500行)
+  - 边缘状态同步器：状态计算、本地缓存、同步到中心
+- `edge-nodes/state-pubsub/pubsub.go` (~400行)
+  - 状态发布订阅：边缘节点间状态事件传播
+
+#### API设计
+```
+POST   /api/edge/state/{userId}/update - 更新用户状态（通过边缘节点）
+GET    /api/edge/state/{userId}        - 获取用户当前状态
+POST   /api/edge/state/batch-update    - 批量更新状态
+GET    /api/edge/state/sync-status     - 获取状态同步状态
+POST   /api/edge/state/resolve-conflict - 手动解决状态冲突
+GET    /api/edge/state/audit/{userId}  - 获取用户状态变更历史
+```
+
+#### 性能指标
+- `edge.state.sync_latency` - 状态同步延迟
+- `edge.state.conflict_rate` - 状态冲突率
+- `edge.state.cache_hit_rate` - 状态缓存命中率
+- `edge.state.throughput` - 状态更新吞吐量
+- `edge.state.consistency_score` - 状态一致性评分
+
+---
+
+### 功能 #141: 基于位置的边缘服务 (Location-Based Edge Services) 🔴 HIGH
+**利用边缘计算的地理位置优势，提供基于位置的聊天室、附近的人、本地推荐等地理位置相关服务。**
+
+#### 核心特性
+- **位置感知聊天室**: 自动推荐附近的公开聊天室、本地话题讨论组
+- **附近的人发现**: 基于地理位置的用户发现，支持距离过滤
+- **本地事件推荐**: 基于用户位置推荐本地活动、聚会、社交事件
+- **位置模糊化保护**: 用户位置数据隐私保护，支持精确/模糊/虚拟位置
+- **动态地理围栏**: 基于用户位置动态创建和加入地理围栏聊天室
+- **位置轨迹分析**: 分析用户移动模式，提供智能位置服务推荐
+- **跨区域服务切换**: 用户移动时自动切换服务边缘节点
+- **位置数据合规**: 符合GDPR等隐私法规的位置数据处理
+
+#### 技术架构
+**Backend (Java)**:
+- `im-backend/src/main/java/com/im/server/location/LocationBasedServices.java` (~600行)
+  - 基于位置的服务：聊天室推荐、用户发现、事件推荐
+- `im-backend/src/main/java/com/im/server/location/GeoFenceManager.java` (~500行)
+  - 地理围栏管理：围栏创建/更新/删除、成员管理
+- `im-backend/src/main/java/com/im/server/location/PrivacyGuard.java` (~450行)
+  - 位置隐私保护：位置模糊化、虚拟位置、隐私设置
+- `im-backend/src/main/java/com/im/server/location/LocationAnalytics.java` (~400行)
+  - 位置分析：用户移动模式分析、热点区域识别
+
+**Edge Nodes (Go)**:
+- `edge-nodes/location-service/main.go` (~550行)
+  - 边缘位置服务：实时位置处理、本地计算、隐私保护
+- `edge-nodes/geo-index/geohash.go` (~400行)
+  - 地理位置索引：Geohash索引、空间查询、范围搜索
+
+#### API设计
+```
+GET    /api/location/nearby/chatrooms  - 获取附近的聊天室
+GET    /api/location/nearby/users      - 获取附近的用户
+POST   /api/location/geofence          - 创建地理围栏聊天室
+GET    /api/location/events            - 获取本地事件推荐
+POST   /api/location/privacy/settings  - 配置位置隐私设置
+GET    /api/location/traces/{userId}   - 获取用户位置轨迹（仅自己可见）
+POST   /api/location/virtual           - 设置虚拟位置
+DELETE /api/location/data/{userId}     - 删除用户位置数据（GDPR合规）
+```
+
+#### 性能指标
+- `edge.location.query_latency` - 位置查询延迟
+- `edge.location.privacy_compliance` - 位置隐私合规率
+- `edge.location.recommendation_accuracy` - 位置推荐准确率
+- `edge.location.geofence_active_count` - 活跃地理围栏数量
+- `edge.location.traffic_by_region` - 按区域位置服务流量
+
+---
+
+### 功能 #142: 边缘计算安全与运维平台 (Edge Computing Security & Operations Platform) 🔴 HIGH
+**为边缘计算架构提供统一的安全加固、监控运维、远程管理和自动伸缩能力。**
+
+#### 核心特性
+- **边缘节点安全加固**: 
+  - 最小权限原则容器镜像
+  - 容器运行时安全扫描
+  - 安全更新和补丁自动管理
+  - mTLS边缘节点间通信加密
+- **边缘监控告警**:
+  - 边缘节点资源使用率监控（CPU/内存/磁盘/网络）
+  - 连接数、消息量、缓存命中率等业务指标监控
+  - 多级告警策略：边缘节点自愈→区域节点接管→中心介入
+  - 边缘节点故障自动诊断和根因分析
+- **远程运维管理**:
+  - Kubernetes边缘集群统一管理界面
+  - 边缘节点配置远程下发和更新
+  - 边缘应用版本管理和滚动更新
+  - 边缘节点日志集中收集和分析
+- **自动伸缩能力**:
+  - 基于连接数/流量/延迟指标自动扩缩容
+  - 成本感知伸缩策略（按区域定价差异）
+  - 预测性伸缩（基于历史模式预测未来负载）
+  - 边缘节点故障时自动资源迁移
+
+#### 技术架构
+**Backend (Java)**:
+- `im-backend/src/main/java/com/im/server/edge/security/EdgeSecurityManager.java` (~600行)
+  - 边缘安全管理：安全策略、漏洞扫描、访问控制
+- `im-backend/src/main/java/com/im/server/edge/ops/EdgeOpsPlatform.java` (~550行)
+  - 边缘运维平台：监控告警、远程管理、自动伸缩
+- `im-backend/src/main/java/com/im/server/edge/autoscale/AutoScaler.java` (~500行)
+  - 自动伸缩器：基于指标的扩缩容决策、资源调度
+- `im-backend/src/main/java/com/im/server/edge/logging/EdgeLogCollector.java` (~450行)
+  - 边缘日志收集：分布式日志收集、聚合、分析
+
+**Infrastructure/DevOps**:
+- `infra/security/edge-security-policies.yaml` - 边缘安全策略配置
+- `infra/monitoring/edge-prometheus-config.yaml` - 边缘监控配置
+- `infra/logging/edge-fluentd-config.yaml` - 边缘日志收集配置
+- `infra/terraform/edge-auto-scaling/main.tf` - 边缘自动伸缩基础设施
+
+**Dashboard (TypeScript)**:
+- `dashboard/src/pages/EdgeManagement.vue` (~800行)
+  - 边缘管理仪表板：节点状态、监控图表、运维操作
+
+#### API设计
+```
+GET    /api/edge/ops/nodes/status      - 获取所有边缘节点状态
+POST   /api/edge/ops/nodes/{nodeId}/scale - 手动扩缩容边缘节点
+POST   /api/edge/ops/nodes/{nodeId}/update - 更新边缘节点配置
+GET    /api/edge/ops/nodes/{nodeId}/logs  - 获取边缘节点日志
+POST   /api/edge/security/scan          - 发起边缘安全扫描
+GET    /api/edge/security/report        - 获取边缘安全报告
+POST   /api/edge/autoscale/policy       - 配置自动伸缩策略
+GET    /api/edge/autoscale/history      - 获取自动伸缩历史
+```
+
+#### 性能指标
+- `edge.security.vulnerability_count` - 边缘漏洞数量
+- `edge.ops.node_uptime` - 边缘节点可用率
+- `edge.autoscale.events` - 自动伸缩事件次数
+- `edge.monitoring.alert_rate` - 监控告警频率
+- `edge.cost.per_request` - 每请求边缘计算成本
+
+---
+
+## 路线图统计更新
+| 阶段 | 功能数 | 已完成 | 完成率 |
+|------|--------|--------|--------|
+| 第二十三阶段 (AI增强架构) | **4** | 0 | 0% |
+| 第二十四阶段 (AI内容理解与生成) | **5** | 0 | 0% |
+| 第二十五阶段 (边缘计算架构与优化) | **5** | 0 | 0% |
+| **总计** | **180** | **13** | **7%** |
+
+---
+
+*最后更新：2026-03-22 05:32 (架构设计代理 - 新增 5 个功能：边缘计算消息路由层#138、边缘媒体内容分发系统#139、边缘计算状态同步引擎#140、基于位置的边缘服务#141、边缘计算安全与运维平台#142；由 edge_computing_im_system.md (边缘计算基本概念/三层架构模式/技术实现要点/性能优化策略/安全考虑/监控运维) 知识驱动，功能总数 175→180)*

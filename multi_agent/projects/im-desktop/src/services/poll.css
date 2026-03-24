@@ -1,0 +1,501 @@
+/* ==================== 投票卡片样式 ==================== */
+
+.poll-card {
+  background: var(--bg-secondary, #fff);
+  border: 1px solid var(--border-color, #e0e0e0);
+  border-radius: 12px;
+  padding: 16px;
+  margin: 8px 0;
+  max-width: 480px;
+  cursor: pointer;
+  transition: box-shadow 0.2s, transform 0.2s;
+}
+
+.poll-card:hover {
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  transform: translateY(-1px);
+}
+
+.poll-card.poll-closed {
+  opacity: 0.85;
+}
+
+.poll-card.poll-cancelled {
+  opacity: 0.6;
+}
+
+/* 头部 */
+.poll-header {
+  display: flex;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.poll-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary, #1a1a1a);
+  flex: 1;
+  line-height: 1.4;
+}
+
+.poll-status-badge {
+  font-size: 11px;
+  color: white;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-weight: 500;
+}
+
+.poll-tag {
+  font-size: 11px;
+  color: var(--text-secondary, #666);
+  background: var(--bg-tertiary, #f0f0f0);
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+
+/* 统计栏 */
+.poll-stats-bar {
+  font-size: 12px;
+  color: var(--text-secondary, #888);
+  margin-bottom: 6px;
+}
+
+/* 截止时间 */
+.poll-deadline {
+  font-size: 12px;
+  color: #f39c12;
+  margin-bottom: 10px;
+  font-weight: 500;
+}
+
+/* 选项列表 */
+.poll-options {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+/* 选项行 */
+.poll-option-row {
+  border: 1px solid var(--border-color, #e0e0e0);
+  border-radius: 8px;
+  overflow: hidden;
+  transition: border-color 0.2s, background-color 0.2s;
+}
+
+.poll-option-row.clickable:hover {
+  border-color: var(--primary-color, #4CAF50);
+  background: var(--bg-hover, #f5f5f5);
+}
+
+.poll-option-inner {
+  display: flex;
+  align-items: center;
+  padding: 10px 12px;
+  position: relative;
+  min-height: 42px;
+}
+
+/* 选择指示器 */
+.poll-option-indicator {
+  width: 18px;
+  height: 18px;
+  margin-right: 10px;
+  flex-shrink: 0;
+  border: 2px solid var(--border-color, #ccc);
+  transition: all 0.2s;
+}
+
+.poll-option-indicator.radio {
+  border-radius: 50%;
+}
+
+.poll-option-indicator.checkbox {
+  border-radius: 4px;
+}
+
+.poll-option-indicator.checked {
+  border-color: var(--primary-color, #4CAF50);
+  background: var(--primary-color, #4CAF50);
+  position: relative;
+}
+
+.poll-option-indicator.checked::after {
+  content: '✓';
+  color: white;
+  font-size: 11px;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+/* 选项文本 */
+.poll-option-text {
+  font-size: 14px;
+  color: var(--text-primary, #1a1a1a);
+  flex: 1;
+  word-break: break-word;
+}
+
+/* 结果条 */
+.poll-option-result-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  background: rgba(76, 175, 80, 0.15);
+  transition: width 0.4s ease-out;
+  pointer-events: none;
+}
+
+/* 选项统计 */
+.poll-option-stats {
+  font-size: 12px;
+  color: var(--text-secondary, #888);
+  margin-left: 8px;
+  white-space: nowrap;
+  position: relative;
+  z-index: 1;
+}
+
+/* 投票者头像 */
+.poll-option-voters {
+  display: flex;
+  padding: 0 12px 8px;
+  gap: -4px;
+}
+
+.poll-voter-avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--primary-color, #4CAF50);
+  color: white;
+  font-size: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid white;
+  margin-left: -6px;
+  position: relative;
+}
+
+.poll-voter-avatar:first-child {
+  margin-left: 0;
+}
+
+.poll-voters-more {
+  font-size: 11px;
+  color: var(--text-secondary, #888);
+  margin-left: 4px;
+  line-height: 24px;
+}
+
+/* 操作栏 */
+.poll-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border-color, #f0f0f0);
+}
+
+.poll-btn {
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s;
+}
+
+.poll-btn-vote {
+  background: var(--primary-color, #4CAF50);
+  color: white;
+}
+
+.poll-btn-vote:hover:not(:disabled) {
+  background: #43a047;
+}
+
+.poll-btn-vote:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+.poll-btn-cancel {
+  background: transparent;
+  color: var(--text-secondary, #888);
+  border: 1px solid var(--border-color, #ddd);
+}
+
+.poll-btn-cancel:hover {
+  background: var(--bg-hover, #f5f5f5);
+}
+
+.poll-btn-add {
+  background: transparent;
+  color: var(--primary-color, #4CAF50);
+  border: 1px solid var(--primary-color, #4CAF50);
+}
+
+.poll-btn-add:hover {
+  background: rgba(76, 175, 80, 0.1);
+}
+
+.poll-btn-close {
+  background: #f39c12;
+  color: white;
+}
+
+.poll-btn-close:hover {
+  background: #e67e22;
+}
+
+.poll-btn-delete {
+  background: transparent;
+  color: #f44336;
+  border: 1px solid #f44336;
+}
+
+.poll-btn-delete:hover {
+  background: rgba(244, 67, 54, 0.1);
+}
+
+.poll-creator {
+  font-size: 11px;
+  color: var(--text-secondary, #aaa);
+  margin-left: auto;
+}
+
+/* 添加选项 */
+.poll-add-option {
+  display: flex;
+  gap: 6px;
+  width: 100%;
+  margin-top: 6px;
+}
+
+.poll-add-option input {
+  flex: 1;
+  padding: 6px 10px;
+  border: 1px solid var(--border-color, #ddd);
+  border-radius: 6px;
+  font-size: 13px;
+}
+
+.poll-add-option input:focus {
+  outline: none;
+  border-color: var(--primary-color, #4CAF50);
+}
+
+/* ==================== 创建投票对话框样式 ==================== */
+
+.poll-dialog-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.poll-dialog {
+  background: white;
+  border-radius: 16px;
+  padding: 24px;
+  width: 90%;
+  max-width: 440px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+  animation: slideUp 0.25s ease;
+}
+
+@keyframes slideUp {
+  from { transform: translateY(30px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.poll-dialog-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin: 0 0 20px;
+}
+
+.poll-dialog-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  color: #555;
+  margin-bottom: 6px;
+}
+
+.poll-dialog-input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 14px;
+  margin-bottom: 12px;
+  box-sizing: border-box;
+  transition: border-color 0.2s;
+}
+
+.poll-dialog-input:focus {
+  outline: none;
+  border-color: var(--primary-color, #4CAF50);
+}
+
+.poll-dialog-options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.poll-dialog-option-row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.poll-dialog-option-row input {
+  flex: 1;
+}
+
+.poll-dialog-btn-remove {
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: #f44336;
+  color: white;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.poll-dialog-btn-add-option {
+  background: transparent;
+  color: var(--primary-color, #4CAF50);
+  border: 1px dashed var(--primary-color, #4CAF50);
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  width: 100%;
+  margin-bottom: 16px;
+  transition: background 0.2s;
+}
+
+.poll-dialog-btn-add-option:hover {
+  background: rgba(76, 175, 80, 0.08);
+}
+
+.poll-dialog-settings {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding: 12px;
+  background: #f9f9f9;
+  border-radius: 8px;
+}
+
+.poll-dialog-check {
+  display: flex;
+  align-items: center;
+  font-size: 13px;
+  color: #555;
+  cursor: pointer;
+}
+
+.poll-dialog-check input {
+  margin-right: 6px;
+  width: 16px;
+  height: 16px;
+}
+
+.poll-dialog-select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 14px;
+  margin-bottom: 20px;
+  background: white;
+}
+
+.poll-dialog-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.poll-dialog-btn {
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s;
+}
+
+.poll-dialog-btn-cancel {
+  background: #f0f0f0;
+  color: #555;
+}
+
+.poll-dialog-btn-cancel:hover {
+  background: #e0e0e0;
+}
+
+.poll-dialog-btn-submit {
+  background: var(--primary-color, #4CAF50);
+  color: white;
+}
+
+.poll-dialog-btn-submit:hover {
+  background: #43a047;
+}
+
+/* ==================== 响应式适配 ==================== */
+
+@media (max-width: 480px) {
+  .poll-card {
+    max-width: 100%;
+    padding: 12px;
+  }
+
+  .poll-dialog {
+    width: 95%;
+    padding: 16px;
+    border-radius: 12px;
+  }
+
+  .poll-dialog-title {
+    font-size: 16px;
+  }
+}

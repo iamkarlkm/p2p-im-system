@@ -1,0 +1,582 @@
+/**
+ * AI聊天机器人样式
+ */
+
+/* ================== Bot Card ================== */
+
+.bot-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: var(--bg-secondary, #f5f5f5);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+}
+
+.bot-card:hover {
+  background: var(--bg-hover, #e8e8e8);
+  border-color: var(--border-color, #ddd);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.bot-card.online {
+  border-left: 3px solid #4caf50;
+}
+
+.bot-card.offline {
+  opacity: 0.6;
+  border-left: 3px solid #9e9e9e;
+}
+
+.bot-card-avatar {
+  position: relative;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 20px;
+  font-weight: bold;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.bot-card-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.bot-status-dot {
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 2px solid white;
+}
+
+.bot-status-dot.online {
+  background: #4caf50;
+}
+
+.bot-status-dot.offline {
+  background: #9e9e9e;
+}
+
+.bot-card-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.bot-card-name {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--text-primary, #333);
+  margin-bottom: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.bot-card-type {
+  font-size: 11px;
+  color: #667eea;
+  margin-bottom: 4px;
+}
+
+.bot-card-desc {
+  font-size: 12px;
+  color: var(--text-secondary, #666);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.bot-card-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.bot-card-stats {
+  font-size: 11px;
+  color: var(--text-muted, #999);
+}
+
+.bot-card-btn-group {
+  display: flex;
+  gap: 4px;
+}
+
+/* ================== Bot List ================== */
+
+.bot-list {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.bot-list-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-color, #e0e0e0);
+}
+
+.bot-list-header h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.bot-list-search {
+  display: flex;
+  gap: 8px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-color, #e0e0e0);
+}
+
+.bot-search-input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid var(--border-color, #ddd);
+  border-radius: 6px;
+  font-size: 13px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.bot-search-input:focus {
+  border-color: #667eea;
+}
+
+.bot-type-select {
+  padding: 8px 12px;
+  border: 1px solid var(--border-color, #ddd);
+  border-radius: 6px;
+  font-size: 13px;
+  background: white;
+  cursor: pointer;
+}
+
+.bot-list-items {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.bot-list-empty {
+  text-align: center;
+  padding: 40px;
+  color: var(--text-muted, #999);
+  font-size: 14px;
+}
+
+/* ================== Buttons ================== */
+
+.bot-btn {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.bot-btn-primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.bot-btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.bot-btn-secondary {
+  background: #e0e0e0;
+  color: #333;
+}
+
+.bot-btn-secondary:hover {
+  background: #d0d0d0;
+}
+
+.bot-btn-danger {
+  background: #ffebee;
+  color: #d32f2f;
+}
+
+.bot-btn-danger:hover {
+  background: #ffcdd2;
+}
+
+/* ================== Create Bot Dialog ================== */
+
+.bot-dialog-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.bot-dialog {
+  background: white;
+  border-radius: 12px;
+  width: 480px;
+  max-height: 90vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.bot-dialog-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.bot-dialog-header h3 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.bot-dialog-close {
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: none;
+  font-size: 24px;
+  color: #999;
+  cursor: pointer;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bot-dialog-close:hover {
+  background: #f5f5f5;
+  color: #333;
+}
+
+.bot-dialog-form {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.bot-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.bot-form-group label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #333;
+}
+
+.bot-form-group input,
+.bot-form-group textarea,
+.bot-form-group select {
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.bot-form-group input:focus,
+.bot-form-group textarea:focus,
+.bot-form-group select:focus {
+  border-color: #667eea;
+}
+
+.bot-form-group textarea {
+  min-height: 80px;
+  resize: vertical;
+}
+
+.bot-form-check {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+}
+
+.bot-form-check input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+.bot-form-check label {
+  font-weight: normal;
+  cursor: pointer;
+}
+
+.bot-dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 16px 20px;
+  border-top: 1px solid #e0e0e0;
+}
+
+/* ================== Bot Chat Panel ================== */
+
+.bot-chat-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--bg-primary, #fff);
+  border-left: 1px solid var(--border-color, #e0e0e0);
+}
+
+.bot-chat-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-color, #e0e0e0);
+  background: var(--bg-secondary, #f9f9f9);
+}
+
+.bot-chat-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.bot-chat-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: bold;
+  font-size: 16px;
+}
+
+.bot-chat-name {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.bot-chat-status {
+  font-size: 11px;
+  color: #4caf50;
+}
+
+.bot-chat-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.bot-btn-close {
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: none;
+  font-size: 20px;
+  color: #999;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.bot-btn-close:hover {
+  background: #f0f0f0;
+  color: #333;
+}
+
+.bot-chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.bot-message {
+  max-width: 80%;
+  display: flex;
+  flex-direction: column;
+}
+
+.bot-message.user {
+  align-self: flex-end;
+}
+
+.bot-message.bot {
+  align-self: flex-start;
+}
+
+.bot-message-welcome {
+  align-self: center;
+  text-align: center;
+  max-width: 90%;
+  padding: 16px;
+  background: var(--bg-secondary, #f5f5f5);
+  border-radius: 12px;
+  color: var(--text-secondary, #666);
+  font-size: 13px;
+}
+
+.bot-message-content {
+  padding: 10px 14px;
+  border-radius: 16px;
+  font-size: 14px;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+.bot-message.user .bot-message-content {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-bottom-right-radius: 4px;
+}
+
+.bot-message.bot .bot-message-content {
+  background: var(--bg-secondary, #f0f0f0);
+  color: var(--text-primary, #333);
+  border-bottom-left-radius: 4px;
+}
+
+.bot-typing-indicator {
+  padding: 12px 16px !important;
+}
+
+.bot-typing-dots {
+  display: flex;
+  gap: 4px;
+}
+
+.bot-typing-dots span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--text-muted, #999);
+  animation: typingBounce 1.4s ease-in-out infinite;
+}
+
+.bot-typing-dots span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.bot-typing-dots span:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes typingBounce {
+  0%, 60%, 100% { transform: translateY(0); }
+  30% { transform: translateY(-6px); }
+}
+
+.bot-chat-input-area {
+  display: flex;
+  gap: 8px;
+  padding: 12px 16px;
+  border-top: 1px solid var(--border-color, #e0e0e0);
+  background: var(--bg-secondary, #f9f9f9);
+}
+
+.bot-chat-input {
+  flex: 1;
+  padding: 10px 14px;
+  border: 1px solid var(--border-color, #ddd);
+  border-radius: 20px;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.bot-chat-input:focus {
+  border-color: #667eea;
+}
+
+.bot-btn-send {
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bot-btn-send:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+/* ================== Responsive ================== */
+
+@media (max-width: 600px) {
+  .bot-dialog {
+    width: 95%;
+    max-height: 95vh;
+  }
+
+  .bot-list-search {
+    flex-direction: column;
+  }
+
+  .bot-card {
+    padding: 10px;
+  }
+
+  .bot-card-avatar {
+    width: 40px;
+    height: 40px;
+    font-size: 16px;
+  }
+}

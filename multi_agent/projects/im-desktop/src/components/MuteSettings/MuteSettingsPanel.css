@@ -1,0 +1,321 @@
+/* 免打扰设置面板样式 */
+
+.mute-settings-panel {
+  width: 400px;
+  max-width: 100%;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+}
+
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  background: #f5f5f5;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.panel-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: #999;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+  transition: color 0.2s;
+}
+
+.close-btn:hover {
+  color: #666;
+}
+
+.panel-content {
+  padding: 20px;
+}
+
+.loading {
+  padding: 40px;
+  text-align: center;
+  color: #999;
+}
+
+.setting-section {
+  margin-bottom: 24px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.setting-section:last-of-type {
+  border-bottom: none;
+}
+
+.setting-section h4 {
+  margin: 0 0 16px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+}
+
+.setting-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.setting-label {
+  font-size: 14px;
+  color: #666;
+}
+
+/* Toggle Switch */
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 48px;
+  height: 26px;
+}
+
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  transition: 0.3s;
+  border-radius: 26px;
+}
+
+.toggle-slider:before {
+  position: absolute;
+  content: "";
+  height: 20px;
+  width: 20px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: 0.3s;
+  border-radius: 50%;
+}
+
+.toggle-switch input:checked + .toggle-slider {
+  background-color: #4CAF50;
+}
+
+.toggle-switch input:checked + .toggle-slider:before {
+  transform: translateX(22px);
+}
+
+.toggle-switch input:disabled + .toggle-slider {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* 时间范围 */
+.time-range {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  margin: 16px 0;
+}
+
+.time-input-group {
+  flex: 1;
+}
+
+.time-input-group label {
+  display: block;
+  font-size: 12px;
+  color: #999;
+  margin-bottom: 4px;
+}
+
+.time-input-group input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  color: #333;
+}
+
+.time-input-group input:focus {
+  outline: none;
+  border-color: #4CAF50;
+}
+
+.time-separator {
+  color: #999;
+  font-size: 14px;
+  padding-bottom: 8px;
+}
+
+/* 重复日期选择 */
+.repeat-days {
+  margin-top: 16px;
+}
+
+.repeat-days > label {
+  display: block;
+  font-size: 12px;
+  color: #999;
+  margin-bottom: 8px;
+}
+
+.day-buttons {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.day-buttons button {
+  padding: 4px 12px;
+  font-size: 12px;
+  border: 1px solid #ddd;
+  background: #fff;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.day-buttons button:hover {
+  background: #f5f5f5;
+}
+
+.day-selector {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.day-btn {
+  width: 44px;
+  height: 36px;
+  border: 1px solid #ddd;
+  background: #fff;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  color: #666;
+  transition: all 0.2s;
+}
+
+.day-btn:hover {
+  border-color: #4CAF50;
+}
+
+.day-btn.selected {
+  background: #4CAF50;
+  border-color: #4CAF50;
+  color: #fff;
+}
+
+/* 提示文字 */
+.setting-hint {
+  margin: 12px 0 0 0;
+  font-size: 12px;
+  color: #999;
+  line-height: 1.5;
+}
+
+/* 保存按钮 */
+.save-btn {
+  width: 100%;
+  padding: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+  background: #4CAF50;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.save-btn:hover:not(:disabled) {
+  background: #45a049;
+}
+
+.save-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* 暗色主题适配 */
+.dark-theme .mute-settings-panel {
+  background: #2d2d2d;
+}
+
+.dark-theme .panel-header {
+  background: #252525;
+  border-bottom-color: #404040;
+}
+
+.dark-theme .panel-header h3 {
+  color: #e0e0e0;
+}
+
+.dark-theme .close-btn {
+  color: #888;
+}
+
+.dark-theme .close-btn:hover {
+  color: #bbb;
+}
+
+.dark-theme .setting-section {
+  border-bottom-color: #404040;
+}
+
+.dark-theme .setting-section h4 {
+  color: #e0e0e0;
+}
+
+.dark-theme .setting-label {
+  color: #aaa;
+}
+
+.dark-theme .time-input-group input {
+  background: #333;
+  border-color: #555;
+  color: #e0e0e0;
+}
+
+.dark-theme .day-btn {
+  background: #333;
+  border-color: #555;
+  color: #aaa;
+}
+
+.dark-theme .day-btn:hover {
+  border-color: #4CAF50;
+}
+
+.dark-theme .day-buttons button {
+  background: #333;
+  border-color: #555;
+  color: #aaa;
+}
+
+.dark-theme .setting-hint {
+  color: #777;
+}
