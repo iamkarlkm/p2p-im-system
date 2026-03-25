@@ -1,0 +1,273 @@
+syntax = "proto3";
+
+package im.message;
+
+option java_multiple_files = true;
+option java_package = "com.im.backend.grpc.message";
+option java_outer_classname = "MessageProto";
+
+import "im/common.proto";
+import "google/api/annotations.proto";
+
+// 消息服务
+service MessageService {
+  // 发送消息
+  rpc SendMessage(SendMessageRequest) returns (SendMessageResponse) {
+    option (google.api.http) = {
+      post: "/v1/messages"
+      body: "*"
+    };
+  }
+  
+  // 获取消息列表
+  rpc GetMessages(GetMessagesRequest) returns (GetMessagesResponse) {
+    option (google.api.http) = {
+      get: "/v1/messages"
+    };
+  }
+  
+  // 获取单条消息
+  rpc GetMessage(GetMessageRequest) returns (GetMessageResponse) {
+    option (google.api.http) = {
+      get: "/v1/messages/{message_id}"
+    };
+  }
+  
+  // 更新消息状态
+  rpc UpdateMessageStatus(UpdateMessageStatusRequest) returns (UpdateMessageStatusResponse) {
+    option (google.api.http) = {
+      put: "/v1/messages/{message_id}/status"
+      body: "*"
+    };
+  }
+  
+  // 撤回消息
+  rpc RevokeMessage(RevokeMessageRequest) returns (RevokeMessageResponse) {
+    option (google.api.http) = {
+      delete: "/v1/messages/{message_id}"
+    };
+  }
+  
+  // 编辑消息
+  rpc EditMessage(EditMessageRequest) returns (EditMessageResponse) {
+    option (google.api.http) = {
+      put: "/v1/messages/{message_id}/content"
+      body: "*"
+    };
+  }
+  
+  // 消息搜索
+  rpc SearchMessages(SearchMessagesRequest) returns (SearchMessagesResponse) {
+    option (google.api.http) = {
+      post: "/v1/messages/search"
+      body: "*"
+    };
+  }
+  
+  // 批量操作消息
+  rpc BatchOperateMessages(BatchOperateMessagesRequest) returns (BatchOperateMessagesResponse) {
+    option (google.api.http) = {
+      post: "/v1/messages/batch"
+      body: "*"
+    };
+  }
+  
+  // 获取消息统计
+  rpc GetMessageStatistics(GetMessageStatisticsRequest) returns (GetMessageStatisticsResponse) {
+    option (google.api.http) = {
+      get: "/v1/messages/statistics"
+    };
+  }
+}
+
+// 消息实体
+message Message {
+  string message_id = 1;
+  string session_id = 2;
+  string sender_id = 3;
+  repeated string receiver_ids = 4;
+  im.common.MessageType type = 5;
+  string content = 6;
+  repeated im.common.FileInfo attachments = 7;
+  im.common.MessageStatus status = 8;
+  int64 sent_time = 9;
+  int64 delivered_time = 10;
+  int64 read_time = 11;
+  int64 edited_time = 12;
+  bool is_revoked = 13;
+  string revoke_reason = 14;
+  bool is_pinned = 15;
+  bool is_sensitive = 16;
+  repeated string mentions = 17;
+  string reply_to_message_id = 18;
+  map<string, string> metadata = 19;
+  int32 version = 20;
+}
+
+// 发送消息请求
+message SendMessageRequest {
+  string session_id = 1;
+  repeated string receiver_ids = 2;
+  im.common.MessageType type = 3;
+  string content = 4;
+  repeated im.common.FileInfo attachments = 5;
+  string reply_to_message_id = 6;
+  repeated string mentions = 7;
+  map<string, string> metadata = 8;
+  bool is_urgent = 9;
+  bool is_encrypted = 10;
+  string encryption_key_id = 11;
+}
+
+// 发送消息响应
+message SendMessageResponse {
+  im.common.CommonResponse common = 1;
+  Message message = 2;
+}
+
+// 获取消息列表请求
+message GetMessagesRequest {
+  string session_id = 1;
+  int32 page = 2;
+  int32 size = 3;
+  im.common.TimeRange time_range = 4;
+  repeated im.common.MessageType types = 5;
+  string sender_id = 6;
+  bool include_revoked = 7;
+  bool include_system = 8;
+  string sort_by = 9;
+  bool descending = 10;
+}
+
+// 获取消息列表响应
+message GetMessagesResponse {
+  im.common.CommonResponse common = 1;
+  repeated Message messages = 2;
+  im.common.PageResponse pagination = 3;
+  int32 total_count = 4;
+  int32 unread_count = 5;
+}
+
+// 获取单条消息请求
+message GetMessageRequest {
+  string message_id = 1;
+  bool include_deleted = 2;
+}
+
+// 获取单条消息响应
+message GetMessageResponse {
+  im.common.CommonResponse common = 1;
+  Message message = 2;
+}
+
+// 更新消息状态请求
+message UpdateMessageStatusRequest {
+  string message_id = 1;
+  im.common.MessageStatus new_status = 2;
+  string status_reason = 3;
+}
+
+// 更新消息状态响应
+message UpdateMessageStatusResponse {
+  im.common.CommonResponse common = 1;
+  Message message = 2;
+}
+
+// 撤回消息请求
+message RevokeMessageRequest {
+  string message_id = 1;
+  string reason = 2;
+  bool notify_all = 3;
+}
+
+// 撤回消息响应
+message RevokeMessageResponse {
+  im.common.CommonResponse common = 1;
+  bool success = 2;
+}
+
+// 编辑消息请求
+message EditMessageRequest {
+  string message_id = 1;
+  string new_content = 2;
+  repeated im.common.FileInfo new_attachments = 3;
+  string edit_reason = 4;
+}
+
+// 编辑消息响应
+message EditMessageResponse {
+  im.common.CommonResponse common = 1;
+  Message message = 2;
+  string previous_content = 3;
+}
+
+// 搜索消息请求
+message SearchMessagesRequest {
+  string query = 1;
+  string session_id = 2;
+  string sender_id = 3;
+  im.common.TimeRange time_range = 4;
+  repeated im.common.MessageType types = 5;
+  bool include_content = 6;
+  bool include_attachments = 7;
+  int32 page = 8;
+  int32 size = 9;
+}
+
+// 搜索消息响应
+message SearchMessagesResponse {
+  im.common.CommonResponse common = 1;
+  repeated Message messages = 2;
+  im.common.PageResponse pagination = 3;
+  int32 total_hits = 4;
+  repeated string highlight_fields = 5;
+}
+
+// 批量操作消息请求
+message BatchOperateMessagesRequest {
+  enum Operation {
+    OPERATION_UNKNOWN = 0;
+    OPERATION_DELETE = 1;
+    OPERATION_REVOKE = 2;
+    OPERATION_MARK_AS_READ = 3;
+    OPERATION_MARK_AS_UNREAD = 4;
+    OPERATION_PIN = 5;
+    OPERATION_UNPIN = 6;
+    OPERATION_EXPORT = 7;
+  }
+  
+  repeated string message_ids = 1;
+  Operation operation = 2;
+  map<string, string> parameters = 3;
+}
+
+// 批量操作消息响应
+message BatchOperateMessagesResponse {
+  im.common.CommonResponse common = 1;
+  int32 success_count = 2;
+  int32 failed_count = 3;
+  repeated string failed_message_ids = 4;
+  string result_url = 5; // 导出结果URL
+}
+
+// 获取消息统计请求
+message GetMessageStatisticsRequest {
+  string session_id = 1;
+  string user_id = 2;
+  im.common.TimeRange time_range = 3;
+  im.common.MessageType type = 4;
+  string group_by = 5; // day, week, month, hour
+}
+
+// 获取消息统计响应
+message GetMessageStatisticsResponse {
+  im.common.CommonResponse common = 1;
+  map<string, int32> daily_counts = 2;
+  map<string, int32> type_counts = 3;
+  map<string, int32> sender_counts = 4;
+  int32 total_messages = 5;
+  int32 total_words = 6;
+  int32 total_files = 7;
+  double avg_message_length = 8;
+  string peak_hour = 9;
+}

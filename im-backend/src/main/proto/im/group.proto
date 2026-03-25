@@ -1,0 +1,411 @@
+syntax = "proto3";
+
+package im.group;
+
+option java_multiple_files = true;
+option java_package = "com.im.backend.grpc.group";
+option java_outer_classname = "GroupProto";
+
+import "im/common.proto";
+import "google/api/annotations.proto";
+
+// 群组服务
+service GroupService {
+  // 创建群组
+  rpc CreateGroup(CreateGroupRequest) returns (CreateGroupResponse) {
+    option (google.api.http) = {
+      post: "/v1/groups"
+      body: "*"
+    };
+  }
+  
+  // 获取群组信息
+  rpc GetGroup(GetGroupRequest) returns (GetGroupResponse) {
+    option (google.api.http) = {
+      get: "/v1/groups/{group_id}"
+    };
+  }
+  
+  // 更新群组信息
+  rpc UpdateGroup(UpdateGroupRequest) returns (UpdateGroupResponse) {
+    option (google.api.http) = {
+      put: "/v1/groups/{group_id}"
+      body: "*"
+    };
+  }
+  
+  // 删除群组
+  rpc DeleteGroup(DeleteGroupRequest) returns (DeleteGroupResponse) {
+    option (google.api.http) = {
+      delete: "/v1/groups/{group_id}"
+    };
+  }
+  
+  // 添加群成员
+  rpc AddGroupMember(AddGroupMemberRequest) returns (AddGroupMemberResponse) {
+    option (google.api.http) = {
+      post: "/v1/groups/{group_id}/members"
+      body: "*"
+    };
+  }
+  
+  // 移除群成员
+  rpc RemoveGroupMember(RemoveGroupMemberRequest) returns (RemoveGroupMemberResponse) {
+    option (google.api.http) = {
+      delete: "/v1/groups/{group_id}/members/{user_id}"
+    };
+  }
+  
+  // 获取群成员列表
+  rpc GetGroupMembers(GetGroupMembersRequest) returns (GetGroupMembersResponse) {
+    option (google.api.http) = {
+      get: "/v1/groups/{group_id}/members"
+    };
+  }
+  
+  // 更新群成员角色
+  rpc UpdateGroupMemberRole(UpdateGroupMemberRoleRequest) returns (UpdateGroupMemberRoleResponse) {
+    option (google.api.http) = {
+      put: "/v1/groups/{group_id}/members/{user_id}/role"
+      body: "*"
+    };
+  }
+  
+  // 搜索群组
+  rpc SearchGroups(SearchGroupsRequest) returns (SearchGroupsResponse) {
+    option (google.api.http) = {
+      get: "/v1/groups/search"
+    };
+  }
+  
+  // 获取用户群组列表
+  rpc GetUserGroups(GetUserGroupsRequest) returns (GetUserGroupsResponse) {
+    option (google.api.http) = {
+      get: "/v1/users/{user_id}/groups"
+    };
+  }
+  
+  // 获取群组统计
+  rpc GetGroupStatistics(GetGroupStatisticsRequest) returns (GetGroupStatisticsResponse) {
+    option (google.api.http) = {
+      get: "/v1/groups/{group_id}/statistics"
+    };
+  }
+}
+
+// 群组实体
+message Group {
+  string group_id = 1;
+  string name = 2;
+  string description = 3;
+  string avatar_url = 4;
+  string creator_id = 5;
+  im.common.GroupType type = 6;
+  int32 max_members = 7;
+  int32 current_members = 8;
+  bool is_public = 9;
+  string invite_code = 10;
+  repeated string tags = 11;
+  map<string, string> metadata = 12;
+  int64 created_time = 13;
+  int64 updated_time = 14;
+  im.common.Status status = 15;
+  string announcement = 16;
+  repeated string admin_ids = 17;
+  repeated string moderator_ids = 18;
+  repeated GroupRule rules = 19;
+  GroupSettings settings = 20;
+  int32 version = 21;
+}
+
+// 群组成员
+message GroupMember {
+  string group_id = 1;
+  string user_id = 2;
+  GroupMemberRole role = 3;
+  string nickname_in_group = 4;
+  int64 join_time = 5;
+  int64 last_active_time = 6;
+  int32 message_count = 7;
+  GroupMemberStatus status = 8;
+  string join_method = 9;
+  string invited_by = 10;
+  map<string, string> metadata = 11;
+  int32 version = 12;
+}
+
+// 群组规则
+message GroupRule {
+  string rule_id = 1;
+  string group_id = 2;
+  string title = 3;
+  string content = 4;
+  int32 priority = 5;
+  bool is_enabled = 6;
+  int64 created_time = 7;
+  string created_by = 8;
+  int64 updated_time = 9;
+}
+
+// 群组设置
+message GroupSettings {
+  string group_id = 1;
+  bool allow_member_invite = 2;
+  bool require_approval = 3;
+  bool allow_anonymous = 4;
+  bool allow_file_sharing = 5;
+  int32 max_file_size_mb = 6;
+  repeated string allowed_file_types = 7;
+  bool allow_voice_call = 8;
+  bool allow_video_call = 9;
+  int32 max_call_participants = 10;
+  bool allow_polls = 11;
+  bool allow_announcements = 12;
+  bool allow_stickers = 13;
+  bool allow_gifs = 14;
+  bool allow_reactions = 15;
+  bool allow_editing = 16;
+  bool allow_deleting = 17;
+  int32 message_retention_days = 18;
+  bool enable_encryption = 19;
+  string encryption_key = 20;
+  int32 version = 21;
+}
+
+// 群组成员角色
+enum GroupMemberRole {
+  ROLE_UNKNOWN = 0;
+  ROLE_OWNER = 1;
+  ROLE_ADMIN = 2;
+  ROLE_MODERATOR = 3;
+  ROLE_MEMBER = 4;
+  ROLE_GUEST = 5;
+  ROLE_BANNED = 6;
+}
+
+// 群组成员状态
+enum GroupMemberStatus {
+  MEMBER_STATUS_UNKNOWN = 0;
+  MEMBER_STATUS_ACTIVE = 1;
+  MEMBER_STATUS_MUTED = 2;
+  MEMBER_STATUS_INACTIVE = 3;
+  MEMBER_STATUS_LEFT = 4;
+  MEMBER_STATUS_KICKED = 5;
+  MEMBER_STATUS_BANNED = 6;
+}
+
+// 创建群组请求
+message CreateGroupRequest {
+  string name = 1;
+  string description = 2;
+  im.common.GroupType type = 3;
+  bool is_public = 4;
+  int32 max_members = 5;
+  repeated string initial_members = 6;
+  string avatar_url = 7;
+  repeated string tags = 8;
+  map<string, string> metadata = 9;
+  GroupSettings settings = 10;
+}
+
+// 创建群组响应
+message CreateGroupResponse {
+  im.common.CommonResponse common = 1;
+  Group group = 2;
+  repeated GroupMember members = 3;
+  string invite_code = 4;
+}
+
+// 获取群组请求
+message GetGroupRequest {
+  string group_id = 1;
+  bool include_members = 2;
+  bool include_settings = 3;
+  bool include_rules = 4;
+}
+
+// 获取群组响应
+message GetGroupResponse {
+  im.common.CommonResponse common = 1;
+  Group group = 2;
+  repeated GroupMember members = 3;
+  GroupSettings settings = 4;
+  repeated GroupRule rules = 5;
+}
+
+// 更新群组请求
+message UpdateGroupRequest {
+  string group_id = 1;
+  string name = 2;
+  string description = 3;
+  string avatar_url = 4;
+  bool is_public = 5;
+  int32 max_members = 6;
+  string announcement = 7;
+  repeated string tags = 8;
+  map<string, string> metadata = 9;
+  GroupSettings settings = 10;
+}
+
+// 更新群组响应
+message UpdateGroupResponse {
+  im.common.CommonResponse common = 1;
+  Group group = 2;
+}
+
+// 删除群组请求
+message DeleteGroupRequest {
+  string group_id = 1;
+  string reason = 2;
+  bool delete_messages = 3;
+  bool notify_members = 4;
+}
+
+// 删除群组响应
+message DeleteGroupResponse {
+  im.common.CommonResponse common = 1;
+  bool success = 2;
+  int64 deleted_time = 3;
+  int32 affected_members = 4;
+}
+
+// 添加群成员请求
+message AddGroupMemberRequest {
+  string group_id = 1;
+  repeated string user_ids = 2;
+  string invited_by = 3;
+  string invite_code = 4;
+  GroupMemberRole initial_role = 5;
+  string welcome_message = 6;
+}
+
+// 添加群成员响应
+message AddGroupMemberResponse {
+  im.common.CommonResponse common = 1;
+  int32 success_count = 2;
+  int32 failed_count = 3;
+  repeated string failed_user_ids = 4;
+  repeated GroupMember added_members = 5;
+}
+
+// 移除群成员请求
+message RemoveGroupMemberRequest {
+  string group_id = 1;
+  string user_id = 2;
+  string reason = 3;
+  bool is_kick = 4;
+  bool is_ban = 5;
+  int64 ban_duration_seconds = 6;
+  bool notify_group = 7;
+}
+
+// 移除群成员响应
+message RemoveGroupMemberResponse {
+  im.common.CommonResponse common = 1;
+  bool success = 2;
+  GroupMember removed_member = 3;
+  string action_result = 4;
+}
+
+// 获取群成员列表请求
+message GetGroupMembersRequest {
+  string group_id = 1;
+  int32 page = 2;
+  int32 size = 3;
+  repeated GroupMemberRole roles = 4;
+  GroupMemberStatus status = 5;
+  string search_query = 6;
+  string sort_by = 7;
+  bool descending = 8;
+}
+
+// 获取群成员列表响应
+message GetGroupMembersResponse {
+  im.common.CommonResponse common = 1;
+  repeated GroupMember members = 2;
+  im.common.PageResponse pagination = 3;
+  int32 total_count = 4;
+  map<string, int32> role_distribution = 5;
+  map<string, int32> status_distribution = 6;
+}
+
+// 更新群成员角色请求
+message UpdateGroupMemberRoleRequest {
+  string group_id = 1;
+  string user_id = 2;
+  GroupMemberRole new_role = 3;
+  string reason = 4;
+  bool notify_member = 5;
+  bool notify_group = 6;
+}
+
+// 更新群成员角色响应
+message UpdateGroupMemberRoleResponse {
+  im.common.CommonResponse common = 1;
+  bool success = 2;
+  GroupMember updated_member = 3;
+}
+
+// 搜索群组请求
+message SearchGroupsRequest {
+  string query = 1;
+  int32 page = 2;
+  int32 size = 3;
+  im.common.GroupType type = 4;
+  bool is_public = 5;
+  repeated string tags = 6;
+  int32 min_members = 7;
+  int32 max_members = 8;
+  im.common.TimeRange created_range = 9;
+  string sort_by = 10;
+  bool descending = 11;
+}
+
+// 搜索群组响应
+message SearchGroupsResponse {
+  im.common.CommonResponse common = 1;
+  repeated Group groups = 2;
+  im.common.PageResponse pagination = 3;
+  int32 total_count = 4;
+}
+
+// 获取用户群组列表请求
+message GetUserGroupsRequest {
+  string user_id = 1;
+  bool include_details = 2;
+  bool include_unread_counts = 3;
+  GroupMemberRole minimum_role = 4;
+  im.common.GroupType type = 5;
+}
+
+// 获取用户群组列表响应
+message GetUserGroupsResponse {
+  im.common.CommonResponse common = 1;
+  repeated Group groups = 2;
+  map<string, int32> unread_counts = 3;
+  map<string, GroupMember> membership_details = 4;
+  int32 total_count = 5;
+}
+
+// 获取群组统计请求
+message GetGroupStatisticsRequest {
+  string group_id = 1;
+  im.common.TimeRange time_range = 2;
+  string group_by = 3; // day, week, month
+}
+
+// 获取群组统计响应
+message GetGroupStatisticsResponse {
+  im.common.CommonResponse common = 1;
+  map<string, int32> daily_messages = 2;
+  map<string, int32> active_members = 3;
+  map<string, int32> new_members = 4;
+  map<string, int32> message_type_distribution = 5;
+  map<string, int32> top_senders = 6;
+  double avg_message_per_day = 7;
+  double avg_members_online = 8;
+  string peak_activity_time = 9;
+  int32 total_messages = 10;
+  int32 total_members_joined = 11;
+  int32 total_members_left = 12;
+}

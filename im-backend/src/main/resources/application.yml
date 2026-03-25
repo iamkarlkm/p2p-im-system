@@ -1,0 +1,51 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: im-server
+  datasource:
+    url: jdbc:mysql://localhost:3306/im_db?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai
+    username: root
+    password: root
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  redis:
+    host: localhost
+    port: 6379
+    password:
+    database: 0
+    cluster:
+      nodes: localhost:6379,localhost:6378,localhost:6377
+  cloud:
+    nacos:
+      discovery:
+        server-addr: localhost:8848
+      config:
+        server-addr: localhost:8848
+
+# Netty WebSocket配置
+netty:
+  websocket:
+    port: 9000
+    boss-threads: 4
+    worker-threads: 8
+    max-connections: 10000
+    keep-alive: true
+
+# JWT配置
+jwt:
+  secret: im-server-secret-key-2024
+  expiration: 86400000
+  refresh-expiration: 604800000
+
+# 文件上传配置
+file:
+  upload:
+    path: ./uploads
+    max-size: 10485760
+
+# 日志配置
+logging:
+  level:
+    com.im.server: DEBUG
+    io.netty: INFO

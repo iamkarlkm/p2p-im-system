@@ -1,0 +1,45 @@
+{
+  "resources": [
+    {"pattern": ".*\\.properties$"},
+    {"pattern": ".*\\.xml$"},
+    {"pattern": ".*\\.yml$"},
+    {"pattern": ".*\\.yaml$"},
+    {"pattern": "META-INF/spring/.*"},
+    {"pattern": "META-INF/services/.*"},
+    {"pattern": "org/springframework/.*"},
+    {"pattern": "com/im/system/.*"}
+  ],
+  "reflection": [
+    {"name": "com.im.system.entity.WebhookEventEntity", "allDeclaredConstructors": true, "allPublicFields": true, "allDeclaredMethods": true},
+    {"name": "com.im.system.entity.MessageEntity", "allDeclaredConstructors": true, "allPublicFields": true},
+    {"name": "com.im.system.entity.UserEntity", "allDeclaredConstructors": true, "allPublicFields": true},
+    {"name": "com.im.system.entity.SessionEntity", "allDeclaredConstructors": true, "allPublicFields": true},
+    {"name": "com.im.system.entity.GroupEntity", "allDeclaredConstructors": true, "allPublicFields": true},
+    {"name": "com.im.system.dto.MessageDTO", "allDeclaredConstructors": true, "allPublicFields": true, "allDeclaredMethods": true},
+    {"name": "com.im.system.dto.UserDTO", "allDeclaredConstructors": true, "allPublicFields": true, "allDeclaredMethods": true},
+    {"name": "org.springframework.boot.autoconfigure.SpringBootApplication", "allDeclaredMethods": true},
+    {"name": "org.springframework.web.bind.annotation.RestController", "allDeclaredMethods": true},
+    {"name": "org.springframework.stereotype.Service", "allDeclaredMethods": true},
+    {"name": "org.springframework.stereotype.Repository", "allDeclaredMethods": true},
+    {"name": "java.lang.String", "allDeclaredConstructors": true},
+    {"name": "java.util.ArrayList", "allDeclaredConstructors": true},
+    {"name": "java.util.HashMap", "allDeclaredConstructors": true},
+    {"name": "java.util.HashSet", "allDeclaredConstructors": true},
+    {"name": "java.util.LinkedList", "allDeclaredConstructors": true},
+    {"name": "java.util.Date", "allDeclaredConstructors": true},
+    {"name": "java.sql.Timestamp", "allDeclaredConstructors": true},
+    {"name": "java.time.LocalDateTime", "allDeclaredConstructors": true},
+    {"name": "java.time.Instant", "allDeclaredConstructors": true},
+    {"name": "java.util.UUID", "allDeclaredConstructors": true},
+    {"name": "org.postgresql.PGConnection", "allDeclaredMethods": true},
+    {"name": "com.mysql.cj.jdbc.Driver", "allDeclaredConstructors": true},
+    {"name": "org.postgresql.Driver", "allDeclaredConstructors": true}
+  ],
+  "jni": [],
+  "proxies": [
+    ["org.springframework.data.jpa.repository.JpaRepository"],
+    ["org.springframework.web.servlet.HandlerMapping"],
+    ["javax.servlet.Filter"],
+    ["org.springframework.web.filter.OncePerRequestFilter"]
+  ]
+}

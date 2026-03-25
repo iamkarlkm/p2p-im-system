@@ -1,0 +1,361 @@
+syntax = "proto3";
+
+package im.auth;
+
+option java_multiple_files = true;
+option java_package = "com.im.backend.grpc.auth";
+option java_outer_classname = "AuthProto";
+
+import "im/common.proto";
+import "google/api/annotations.proto";
+
+// 认证授权服务
+service AuthService {
+  // 验证令牌
+  rpc ValidateToken(ValidateTokenRequest) returns (ValidateTokenResponse) {
+    option (google.api.http) = {
+      post: "/v1/auth/validate"
+      body: "*"
+    };
+  }
+  
+  // 刷新令牌
+  rpc RefreshToken(RefreshTokenRequest) returns (RefreshTokenResponse) {
+    option (google.api.http) = {
+      post: "/v1/auth/refresh"
+      body: "*"
+    };
+  }
+  
+  // 登出
+  rpc Logout(LogoutRequest) returns (LogoutResponse) {
+    option (google.api.http) = {
+      post: "/v1/auth/logout"
+      body: "*"
+    };
+  }
+  
+  // 获取会话列表
+  rpc GetSessions(GetSessionsRequest) returns (GetSessionsResponse) {
+    option (google.api.http) = {
+      get: "/v1/auth/sessions"
+    };
+  }
+  
+  // 终止会话
+  rpc TerminateSession(TerminateSessionRequest) returns (TerminateSessionResponse) {
+    option (google.api.http) = {
+      delete: "/v1/auth/sessions/{session_id}"
+    };
+  }
+  
+  // 批量终止会话
+  rpc TerminateSessions(TerminateSessionsRequest) returns (TerminateSessionsResponse) {
+    option (google.api.http) = {
+      post: "/v1/auth/sessions/terminate"
+      body: "*"
+    };
+  }
+  
+  // 获取权限列表
+  rpc GetPermissions(GetPermissionsRequest) returns (GetPermissionsResponse) {
+    option (google.api.http) = {
+      get: "/v1/auth/permissions"
+    };
+  }
+  
+  // 验证权限
+  rpc CheckPermission(CheckPermissionRequest) returns (CheckPermissionResponse) {
+    option (google.api.http) = {
+      post: "/v1/auth/check-permission"
+      body: "*"
+    };
+  }
+  
+  // 获取安全配置
+  rpc GetSecurityConfig(GetSecurityConfigRequest) returns (GetSecurityConfigResponse) {
+    option (google.api.http) = {
+      get: "/v1/auth/security-config"
+    };
+  }
+  
+  // 更新安全配置
+  rpc UpdateSecurityConfig(UpdateSecurityConfigRequest) returns (UpdateSecurityConfigResponse) {
+    option (google.api.http) = {
+      put: "/v1/auth/security-config"
+      body: "*"
+    };
+  }
+}
+
+// 会话实体
+message Session {
+  string session_id = 1;
+  string user_id = 2;
+  string device_id = 3;
+  string device_name = 4;
+  string device_type = 5;
+  string ip_address = 6;
+  string user_agent = 7;
+  string location = 8;
+  int64 login_time = 9;
+  int64 last_active_time = 10;
+  int64 expiry_time = 11;
+  bool is_active = 12;
+  bool is_current = 13;
+  string token_type = 14;
+  repeated string scopes = 15;
+  map<string, string> metadata = 16;
+  int32 version = 17;
+}
+
+// 权限实体
+message Permission {
+  string permission_id = 1;
+  string name = 2;
+  string description = 3;
+  string resource = 4;
+  string action = 5;
+  repeated string conditions = 6;
+  bool is_system = 7;
+  int64 created_time = 8;
+  int64 updated_time = 9;
+  im.common.Status status = 10;
+}
+
+// 角色实体
+message Role {
+  string role_id = 1;
+  string name = 2;
+  string description = 3;
+  repeated string permissions = 4;
+  bool is_system = 5;
+  int64 created_time = 6;
+  int64 updated_time = 7;
+  im.common.Status status = 8;
+  int32 version = 9;
+}
+
+// 安全配置
+message SecurityConfig {
+  bool require_email_verification = 1;
+  bool require_phone_verification = 2;
+  bool enable_two_factor = 3;
+  int32 two_factor_method = 4; // 1=SMS, 2=Email, 3=App
+  int32 password_min_length = 5;
+  bool password_require_uppercase = 6;
+  bool password_require_lowercase = 7;
+  bool password_require_numbers = 8;
+  bool password_require_symbols = 9;
+  int32 password_expiry_days = 10;
+  int32 max_failed_attempts = 11;
+  int32 lockout_duration_minutes = 12;
+  int32 session_timeout_minutes = 13;
+  bool allow_concurrent_sessions = 14;
+  int32 max_concurrent_sessions = 15;
+  bool enable_ip_whitelist = 16;
+  repeated string allowed_ips = 17;
+  bool enable_device_whitelist = 18;
+  bool enable_geo_restriction = 19;
+  repeated string allowed_countries = 20;
+  bool enable_rate_limiting = 21;
+  int32 requests_per_minute = 22;
+  bool enable_audit_log = 23;
+  int32 audit_log_retention_days = 24;
+  bool enable_encryption_at_rest = 25;
+  string encryption_key_id = 26;
+  int32 version = 27;
+}
+
+// 验证令牌请求
+message ValidateTokenRequest {
+  string token = 1;
+  string token_type = 2; // access, refresh, api_key
+  bool check_expiry = 3;
+  bool check_revocation = 4;
+  bool include_user_info = 5;
+  bool include_permissions = 6;
+}
+
+// 验证令牌响应
+message ValidateTokenResponse {
+  im.common.CommonResponse common = 1;
+  bool is_valid = 2;
+  string user_id = 3;
+  string username = 4;
+  int64 issued_at = 5;
+  int64 expires_at = 6;
+  repeated string scopes = 7;
+  repeated string roles = 8;
+  repeated string permissions = 9;
+  map<string, string> claims = 10;
+  string token_type = 11;
+  string session_id = 12;
+}
+
+// 刷新令牌请求
+message RefreshTokenRequest {
+  string refresh_token = 1;
+  string device_id = 2;
+  string device_name = 3;
+  string ip_address = 4;
+  string user_agent = 5;
+}
+
+// 刷新令牌响应
+message RefreshTokenResponse {
+  im.common.CommonResponse common = 1;
+  string access_token = 2;
+  string refresh_token = 3;
+  int64 access_token_expiry = 4;
+  int64 refresh_token_expiry = 5;
+  string token_type = 6;
+  repeated string scopes = 7;
+  Session session = 8;
+}
+
+// 登出请求
+message LogoutRequest {
+  string session_id = 1;
+  bool logout_all = 2;
+  string reason = 3;
+}
+
+// 登出响应
+message LogoutResponse {
+  im.common.CommonResponse common = 1;
+  int32 terminated_sessions = 2;
+  bool success = 3;
+  int64 logout_time = 4;
+}
+
+// 获取会话列表请求
+message GetSessionsRequest {
+  string user_id = 1;
+  bool include_inactive = 2;
+  bool include_expired = 3;
+  int32 page = 4;
+  int32 size = 5;
+  im.common.TimeRange created_range = 6;
+  string device_type = 7;
+  string sort_by = 8;
+  bool descending = 9;
+}
+
+// 获取会话列表响应
+message GetSessionsResponse {
+  im.common.CommonResponse common = 1;
+  repeated Session sessions = 2;
+  im.common.PageResponse pagination = 3;
+  int32 total_count = 4;
+  int32 active_count = 5;
+  map<string, int32> device_distribution = 6;
+}
+
+// 终止会话请求
+message TerminateSessionRequest {
+  string session_id = 1;
+  string reason = 2;
+  bool notify_user = 3;
+}
+
+// 终止会话响应
+message TerminateSessionResponse {
+  im.common.CommonResponse common = 1;
+  bool success = 2;
+  Session terminated_session = 3;
+  string termination_reason = 4;
+  int64 termination_time = 5;
+}
+
+// 批量终止会话请求
+message TerminateSessionsRequest {
+  repeated string session_ids = 1;
+  string reason = 2;
+  bool notify_users = 3;
+  bool all_sessions_for_user = 4;
+  string user_id = 5;
+}
+
+// 批量终止会话响应
+message TerminateSessionsResponse {
+  im.common.CommonResponse common = 1;
+  int32 success_count = 2;
+  int32 failed_count = 3;
+  repeated string failed_session_ids = 4;
+  int64 termination_time = 5;
+}
+
+// 获取权限列表请求
+message GetPermissionsRequest {
+  string user_id = 1;
+  string role_id = 2;
+  string resource = 3;
+  string action = 4;
+  bool include_inactive = 5;
+  int32 page = 6;
+  int32 size = 7;
+}
+
+// 获取权限列表响应
+message GetPermissionsResponse {
+  im.common.CommonResponse common = 1;
+  repeated Permission permissions = 2;
+  im.common.PageResponse pagination = 3;
+  int32 total_count = 4;
+  map<string, int32> resource_distribution = 5;
+  map<string, int32> action_distribution = 6;
+}
+
+// 验证权限请求
+message CheckPermissionRequest {
+  string user_id = 1;
+  string resource = 2;
+  string action = 3;
+  map<string, string> context = 4;
+  bool check_all = 5;
+  repeated string required_permissions = 6;
+}
+
+// 验证权限响应
+message CheckPermissionResponse {
+  im.common.CommonResponse common = 1;
+  bool has_permission = 2;
+  repeated string missing_permissions = 3;
+  repeated string granted_permissions = 4;
+  map<string, bool> detailed_results = 5;
+  string decision_reason = 6;
+  int64 checked_time = 7;
+}
+
+// 获取安全配置请求
+message GetSecurityConfigRequest {
+  bool include_sensitive = 1;
+}
+
+// 获取安全配置响应
+message GetSecurityConfigResponse {
+  im.common.CommonResponse common = 1;
+  SecurityConfig config = 2;
+  int64 last_updated = 3;
+  string updated_by = 4;
+}
+
+// 更新安全配置请求
+message UpdateSecurityConfigRequest {
+  SecurityConfig config = 1;
+  string update_reason = 2;
+  bool require_approval = 3;
+  string approver_id = 4;
+}
+
+// 更新安全配置响应
+message UpdateSecurityConfigResponse {
+  im.common.CommonResponse common = 1;
+  SecurityConfig updated_config = 2;
+  bool success = 3;
+  int64 update_time = 4;
+  string update_reason = 5;
+  bool requires_approval = 6;
+  string approval_status = 7;
+}

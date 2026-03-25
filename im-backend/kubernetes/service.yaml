@@ -1,0 +1,427 @@
+# service.yaml - 即时通讯系统后端服务配置
+apiVersion: v1
+kind: Service
+metadata:
+  name: im-backend
+  namespace: im-system
+  labels:
+    app: im-backend
+    component: backend
+    version: "1.0.0"
+    managed-by: kubernetes
+  annotations:
+    # 负载均衡器注解
+    service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
+    service.beta.kubernetes.io/aws-load-balancer-cross-zone-load-balancing-enabled: "true"
+    service.beta.kubernetes.io/aws-load-balancer-ssl-cert: "arn:aws:acm:us-east-1:123456789012:certificate/xxxx-xxxx-xxxx-xxxx"
+    service.beta.kubernetes.io/aws-load-balancer-ssl-ports: "443"
+    service.beta.kubernetes.io/aws-load-balancer-backend-protocol: "http"
+    service.beta.kubernetes.io/aws-load-balancer-connection-idle-timeout: "60"
+    
+    # GCP 负载均衡器注解
+    cloud.google.com/load-balancer-type: "Internal"
+    networking.gke.io/internal-load-balancer-allow-global-access: "true"
+    networking.gke.io/load-balancer-resource-tags: "im-backend-service"
+    
+    # Azure 负载均衡器注解
+    service.beta.kubernetes.io/azure-load-balancer-internal: "true"
+    service.beta.kubernetes.io/azure-load-balancer-tcp-idle-timeout: "30"
+    
+    # 服务网格注解
+    traffic.sidecar.istio.io/includeInboundPorts: "8080,8081"
+    traffic.sidecar.istio.io/excludeOutboundPorts: "443"
+    
+    # 监控注解
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "8080"
+    prometheus.io/path: "/actuator/prometheus"
+    
+    # 健康检查注解
+    alb.ingress.kubernetes.io/healthcheck-path: "/actuator/health"
+    alb.ingress.kubernetes.io/healthcheck-port: "8080"
+    alb.ingress.kubernetes.io/healthcheck-interval-seconds: "15"
+    alb.ingress.kubernetes.io/healthcheck-timeout-seconds: "5"
+    alb.ingress.kubernetes.io/success-codes: "200"
+    alb.ingress.kubernetes.io/healthy-threshold-count: "2"
+    alb.ingress.kubernetes.io/unhealthy-threshold-count: "3"
+    
+    # 服务质量注解
+    service.alpha.kubernetes.io/tolerate-unready-endpoints: "true"
+    
+    # 自定义注解
+    im.service.description: "即时通讯系统后端主服务"
+    im.service.version: "1.0.0"
+    im.service.owner: "im-devops-team"
+    im.service.sla: "99.9%"
+    im.service.contact: "devops@im.example.com"
+spec:
+  # 服务类型
+  type: ClusterIP
+  # 生产环境可改为 LoadBalancer 或 NodePort
+  # type: LoadBalancer
+  
+  # 会话亲和性
+  sessionAffinity: ClientIP
+  sessionAffinityConfig:
+    clientIP:
+      timeoutSeconds: 10800  # 3小时
+  
+  # 选择器
+  selector:
+    app: im-backend
+    component: backend
+  
+  # 端口配置
+  ports:
+  - name: http
+    port: 80
+    targetPort: 8080
+    protocol: TCP
+    # 端口注解
+    appProtocol: http
+  
+  - name: https
+    port: 443
+    targetPort: 8080
+    protocol: TCP
+    appProtocol: https
+  
+  - name: management
+    port: 8081
+    targetPort: 8081
+    protocol: TCP
+    appProtocol: http
+  
+  - name: metrics
+    port: 9090
+    targetPort: 8080
+    protocol: TCP
+    appProtocol: http
+  
+  # 外部流量策略
+  externalTrafficPolicy: Cluster
+  # 对于 NodePort/LoadBalancer 类型，可设置为 Local 以保留客户端 IP
+  # externalTrafficPolicy: Local
+  
+  # 内部流量策略
+  internalTrafficPolicy: Cluster
+  
+  # IP 地址族
+  ipFamilies:
+  - IPv4
+  # 双栈支持
+  # - IPv6
+  
+  ipFamilyPolicy: SingleStack
+  # 双栈配置
+  # ipFamilyPolicy: PreferDualStack
+  
+  # 分配 IP 地址
+  clusterIP: 10.96.100.100
+  # 或自动分配
+  # clusterIP: ""
+  
+  # 负载均衡器 IP（LoadBalancer 类型）
+  # loadBalancerIP: 203.0.113.10
+  
+  # 负载均衡器源地址范围
+  loadBalancerSourceRanges:
+  - 10.0.0.0/8
+  - 172.16.0.0/12
+  - 192.168.0.0/16
+  # 公网访问
+  # - 0.0.0.0/0
+  
+  # 发布端口（NodePort 类型）
+  # ports[0].nodePort: 30080
+  
+  # 健康检查节点端口
+  # healthCheckNodePort: 30081
+  
+  # 拓扑感知提示
+  topologyKeys:
+  - "topology.kubernetes.io/zone"
+  - "topology.kubernetes.io/region"
+  - "*"
+  
+  # 分配节点端口范围
+  # allocateLoadBalancerNodePorts: true
+
+---
+# ServiceAccount - 服务账户
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: im-backend-sa
+  namespace: im-system
+  labels:
+    app: im-backend
+    component: service-account
+    version: "1.0.0"
+  annotations:
+    description: "即时通讯系统后端服务账户"
+    automountServiceAccountToken: "true"
+secrets:
+- name: im-backend-sa-token
+
+---
+# ClusterRole - 集群角色
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: im-backend-cluster-role
+  labels:
+    app: im-backend
+    component: rbac
+    version: "1.0.0"
+rules:
+- apiGroups: [""]
+  resources: ["pods", "services", "endpoints", "configmaps", "secrets"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: [""]
+  resources: ["namespaces"]
+  verbs: ["get", "list"]
+- apiGroups: ["apps"]
+  resources: ["deployments", "statefulsets", "replicasets"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["networking.k8s.io"]
+  resources: ["ingresses", "networkpolicies"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["autoscaling"]
+  resources: ["horizontalpodautoscalers"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["batch"]
+  resources: ["jobs", "cronjobs"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["policy"]
+  resources: ["poddisruptionbudgets"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["coordination.k8s.io"]
+  resources: ["leases"]
+  verbs: ["get", "list", "watch"]
+
+---
+# Role - 命名空间角色
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: im-backend-role
+  namespace: im-system
+  labels:
+    app: im-backend
+    component: rbac
+    version: "1.0.0"
+rules:
+- apiGroups: [""]
+  resources: ["pods", "services", "endpoints", "configmaps", "secrets"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+- apiGroups: [""]
+  resources: ["pods/log", "pods/exec"]
+  verbs: ["get", "create"]
+- apiGroups: [""]
+  resources: ["events"]
+  verbs: ["create", "patch"]
+- apiGroups: ["apps"]
+  resources: ["deployments", "statefulsets", "replicasets"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+- apiGroups: ["autoscaling"]
+  resources: ["horizontalpodautoscalers"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+- apiGroups: ["batch"]
+  resources: ["jobs", "cronjobs"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+- apiGroups: ["policy"]
+  resources: ["poddisruptionbudgets"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+
+---
+# ClusterRoleBinding - 集群角色绑定
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: im-backend-cluster-rolebinding
+  labels:
+    app: im-backend
+    component: rbac
+    version: "1.0.0"
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: im-backend-cluster-role
+subjects:
+- kind: ServiceAccount
+  name: im-backend-sa
+  namespace: im-system
+
+---
+# RoleBinding - 角色绑定
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: im-backend-rolebinding
+  namespace: im-system
+  labels:
+    app: im-backend
+    component: rbac
+    version: "1.0.0"
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: im-backend-role
+subjects:
+- kind: ServiceAccount
+  name: im-backend-sa
+  namespace: im-system
+
+---
+# NetworkPolicy - 网络策略
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: im-backend-network-policy
+  namespace: im-system
+  labels:
+    app: im-backend
+    component: network
+    version: "1.0.0"
+spec:
+  podSelector:
+    matchLabels:
+      app: im-backend
+      component: backend
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  # 来自同一命名空间内其他 Pod 的访问
+  - from:
+    - podSelector:
+        matchLabels:
+          namespace: im-system
+    ports:
+    - protocol: TCP
+      port: 8080
+    - protocol: TCP
+      port: 8081
+  
+  # 来自监控系统的访问
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: monitoring
+    ports:
+    - protocol: TCP
+      port: 8080
+    - protocol: TCP
+      port: 8081
+  
+  # 来自服务网格 sidecar 的访问
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          istio-injection: enabled
+    ports:
+    - protocol: TCP
+      port: 8080
+    - protocol: TCP
+      port: 8081
+  
+  # 来自负载均衡器的访问
+  - from:
+    - ipBlock:
+        cidr: 10.0.0.0/8
+    ports:
+    - protocol: TCP
+      port: 8080
+  
+  egress:
+  # 允许访问数据库
+  - to:
+    - podSelector:
+        matchLabels:
+          app: im-mysql
+    ports:
+    - protocol: TCP
+      port: 3306
+  
+  # 允许访问 Redis
+  - to:
+    - podSelector:
+        matchLabels:
+          app: im-redis
+    ports:
+    - protocol: TCP
+      port: 6379
+  
+  # 允许访问 Kafka
+  - to:
+    - podSelector:
+        matchLabels:
+          app: im-kafka
+    ports:
+    - protocol: TCP
+      port: 9092
+  
+  # 允许访问 Elasticsearch
+  - to:
+    - podSelector:
+        matchLabels:
+          app: im-elasticsearch
+    ports:
+    - protocol: TCP
+      port: 9200
+  
+  # 允许访问监控系统
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          name: monitoring
+    ports:
+    - protocol: TCP
+      port: 9090
+    - protocol: TCP
+      port: 3000
+  
+  # 允许 DNS 查询
+  - to:
+    - namespaceSelector: {}
+      podSelector:
+        matchLabels:
+          k8s-app: kube-dns
+    ports:
+    - protocol: UDP
+      port: 53
+    - protocol: TCP
+      port: 53
+  
+  # 允许访问外部 API（需要特定 IP 范围）
+  - to:
+    - ipBlock:
+        cidr: 0.0.0.0/0
+        except:
+        - 10.0.0.0/8
+        - 172.16.0.0/12
+        - 192.168.0.0/16
+    ports:
+    - protocol: TCP
+      port: 443
+    - protocol: TCP
+      port: 80
+
+---
+# PodDisruptionBudget - Pod 中断预算
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: im-backend-pdb
+  namespace: im-system
+  labels:
+    app: im-backend
+    component: availability
+    version: "1.0.0"
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: im-backend
+      component: backend
