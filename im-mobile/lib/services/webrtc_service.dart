@@ -1,503 +1,748 @@
+/// WebRTC实时流媒体传输 - 移动端服务层
+/// 功能#212 - WebRTC Mobile Service
+/// 创建时间: 2026-03-27 01:42
+
 import 'dart:async';
 import 'dart:convert';
-import 'package:flutter/foundation.dart';
-import 'package:webapi/webapi.dart' as webapi;
+import 'dart:math';
+import 'package:flutter/material.dart';
+import 'package:flutter_webrtc/flutter_webrtc.dart';
+import '../models/webrtc_models.dart';
 
-/// ICE服务器配置
-const List<Map<String, dynamic>> iceServers = [
-  {'urls': 'stun:stun.l.google.com:19302'},
-  {'urls': 'stun:stun1.l.google.com:19302'},
-];
+/// WebRTC服务 - 管理音视频通话核心逻辑
+class WebRTCService extends ChangeNotifier {
+  static final WebRTCService _instance = WebRTCService._internal();
+  factory WebRTCService() => _instance;
+  WebRTCService._internal();
 
-/// 通话类型
-enum CallType { audio, video }
+  // 当前会话
+  WebRTCSession? _currentSession;
+  WebRTCSession? get currentSession => _currentSession;
 
-/// 通话状态
-enum CallStatus { idle, calling, ringing, connected, ended, failed }
-
-/// 信令消息
-class SignalingMessage {
-  final String type;
-  final Map<String, dynamic> data;
-
-  SignalingMessage(this.type, this.data);
-}
-
-/// 通话信息
-class CallInfo {
-  final String callId;
-  final String callerId;
-  final String calleeId;
-  final CallType callType;
-  final CallStatus status;
-  final DateTime startTime;
-  DateTime? connectTime;
-
-  CallInfo({
-    required this.callId,
-    required this.callerId,
-    required this.calleeId,
-    required this.callType,
-    required this.status,
-    required this.startTime,
-    this.connectTime,
-  });
-}
-
-/// WebRTC服务 - 移动端
-class WebRTCService {
-  WebRTCPeerConnection? _peerConnection;
+  // WebRTC核心对象
+  RTCPeerConnection? _peerConnection;
   MediaStream? _localStream;
   MediaStream? _remoteStream;
-  WebSocket? _ws;
-  RTCDataChannel? _dataChannel;
+  
+  // 视频渲染器
+  final RTCVideoRenderer localRenderer = RTCVideoRenderer();
+  final RTCVideoRenderer remoteRenderer = RTCVideoRenderer();
 
-  String _currentUserId = '';
-  String _targetUserId = '';
-  CallStatus _callStatus = CallStatus.idle;
-  CallType _callType = CallType.audio;
-  String _callId = '';
-  bool _audioEnabled = true;
-  bool _videoEnabled = true;
+  // 通话状态
+  CallState _callState = CallState.idle;
+  CallState get callState => _callState;
 
-  // 回调函数
-  Function(MediaStream)? onLocalStream;
-  Function(MediaStream)? onRemoteStream;
-  Function(CallStatus)? onCallStatusChanged;
-  Function(bool)? onAudioChanged;
-  Function(bool)? onVideoChanged;
-  Function(CallInfo)? onIncomingCall;
-  Function(String)? onError;
-  Function()? onCleanup;
+  // 参与者列表
+  final Map<String, Participant> _participants = {};
+  Map<String, Participant> get participants => Map.unmodifiable(_participants);
 
-  // 心跳
-  Timer? _pingTimer;
+  // 网络统计
+  NetworkStats? _networkStats;
+  NetworkStats? get networkStats => _networkStats;
+
+  // 配置
+  WebRTCConfig _config = WebRTCConfig.defaultConfig();
+  WebRTCConfig get config => _config;
+
+  // 弱网适配配置
+  WeakNetworkConfig _weakNetworkConfig = WeakNetworkConfig.defaultConfig();
+  
+  // 美颜参数
+  BeautyParams _beautyParams = BeautyParams.defaultParams();
+  BeautyParams get beautyParams => _beautyParams;
+
+  // 定时器
+  Timer? _statsTimer;
+  Timer? _reconnectTimer;
+  Timer? _callDurationTimer;
+
+  // 重连计数
   int _reconnectAttempts = 0;
-  static const int maxReconnectAttempts = 3;
+  static const int maxReconnectAttempts = 5;
+
+  // 信令WebSocket
+  // TODO: 集成实际信令服务
+  // WebSocketChannel? _signalingChannel;
+
+  // Stream控制器
+  final StreamController<SignalingMessage> _signalingController = 
+      StreamController<SignalingMessage>.broadcast();
+  Stream<SignalingMessage> get signalingStream => _signalingController.stream;
+
+  final StreamController<NetworkStats> _statsController = 
+      StreamController<NetworkStats>.broadcast();
+  Stream<NetworkStats> get statsStream => _statsController.stream;
+
+  // 事件回调
+  Function(String sessionId)? onCallConnected;
+  Function(String sessionId)? onCallEnded;
+  Function(String error)? onError;
+  Function(NetworkQuality quality)? onNetworkQualityChanged;
 
   /// 初始化
-  Future<void> init(String userId) async {
-    _currentUserId = userId;
-    _connectSignaling();
+  Future<void> initialize() async {
+    await localRenderer.initialize();
+    await remoteRenderer.initialize();
   }
 
-  /// 连接信令服务器
-  void _connectSignaling() {
-    final wsUrl = 'ws://localhost:8080/ws/signaling?userId=$_currentUserId';
-    
-    try {
-      _ws = WebSocket.connect(wsUrl);
-      
-      _ws!.onOpen.listen((event) {
-        debugPrint('WebRTC Signaling connected');
-        _reconnectAttempts = 0;
-        _startPing();
-      });
-      
-      _ws!.onMessage.listen((event) {
-        final message = jsonDecode(event.data as String);
-        _handleSignalingMessage(message);
-      });
-      
-      _ws!.onClose.listen((event) {
-        debugPrint('WebRTC Signaling disconnected');
-        _stopPing();
-        _attemptReconnect();
-      });
-      
-      _ws!.onError.listen((error) {
-        debugPrint('WebRTC Signaling error: $error');
-      });
-    } catch (e) {
-      debugPrint('Failed to connect to signaling server: $e');
-    }
+  /// 更新配置
+  void updateConfig(WebRTCConfig config) {
+    _config = config;
+    notifyListeners();
   }
 
-  /// 尝试重连
-  void _attemptReconnect() {
-    if (_reconnectAttempts < maxReconnectAttempts) {
-      _reconnectAttempts++;
-      Future.delayed(Duration(seconds: 2 * _reconnectAttempts), () {
-        debugPrint('Reconnecting... attempt $_reconnectAttempts');
-        _connectSignaling();
-      });
-    }
+  /// 更新美颜参数
+  void updateBeautyParams(BeautyParams params) {
+    _beautyParams = params;
+    _applyBeautyFilter();
+    notifyListeners();
   }
 
-  /// 开始心跳
-  void _startPing() {
-    _pingTimer = Timer.periodic(const Duration(seconds: 30), (_) {
-      _sendSignaling({'type': 'ping'});
-    });
-  }
-
-  /// 停止心跳
-  void _stopPing() {
-    _pingTimer?.cancel();
-    _pingTimer = null;
-  }
-
-  /// 发送信令消息
-  void _sendSignaling(Map<String, dynamic> message) {
-    if (_ws != null && _ws!.readyState == WebSocket.open) {
-      _ws!.add(jsonEncode(message));
-    }
-  }
-
-  /// 处理信令消息
-  void _handleSignalingMessage(Map<String, dynamic> message) {
-    final type = message['type'] as String;
+  /// 应用美颜滤镜（使用Canvas处理）
+  void _applyBeautyFilter() {
+    if (!_config.enableBeautyFilter) return;
     
-    switch (type) {
-      case 'ice_config':
-        debugPrint('Received ICE config');
-        break;
-        
-      case 'offer':
-        _handleOffer(message);
-        break;
-        
-      case 'answer':
-        _handleAnswer(message);
-        break;
-        
-      case 'ice_candidate':
-        _handleIceCandidate(message);
-        break;
-        
-      case 'incoming_call':
-        _handleIncomingCall(message);
-        break;
-        
-      case 'call_accepted':
-        _handleCallAccepted(message);
-        break;
-        
-      case 'call_rejected':
-        _handleCallRejected(message);
-        break;
-        
-      case 'call_ended':
-        _handleCallEnded(message);
-        break;
-        
-      case 'audio_toggled':
-        onAudioChanged?.call(message['enabled'] as bool);
-        break;
-        
-      case 'video_toggled':
-        onVideoChanged?.call(message['enabled'] as bool);
-        break;
-    }
-  }
-
-  /// 创建RTCPeerConnection
-  Future<WebRTCPeerConnection> _createPeerConnection() async {
-    final config = RTCConfiguration();
-    config.iceServers = iceServers;
-    
-    final pc = await createPeerConnection(config);
-    
-    // 添加本地媒体轨道
-    if (_localStream != null) {
-      for (final track in _localStream!.getVideoTracks()) {
-        await pc.addTrack(track, _localStream!);
-      }
-      for (final track in _localStream!.getAudioTracks()) {
-        await pc.addTrack(track, _localStream!);
-      }
-    }
-    
-    // 收集ICE候选
-    pc.onIceCandidate = (candidate) {
-      if (candidate != null) {
-        _sendSignaling({
-          'type': 'ice_candidate',
-          'targetUserId': _targetUserId,
-          'candidate': candidate.candidate,
-          'sdpMid': candidate.sdpMid,
-          'sdpMLineIndex': candidate.sdpMLineIndex,
-        });
-      }
-    };
-    
-    // 接收远程媒体轨道
-    pc.onTrack = (event) {
-      if (event.streams.isNotEmpty) {
-        _remoteStream = event.streams[0];
-        onRemoteStream?.call(_remoteStream!);
-      }
-    };
-    
-    // 连接状态变化
-    pc.onConnectionState = (state) {
-      debugPrint('Connection state: $state');
-      
-      if (state == RTCPeerConnectionState.RTCPeerConnectionStateConnected) {
-        _callStatus = CallStatus.connected;
-        onCallStatusChanged?.call(_callStatus);
-      } else if (state == RTCPeerConnectionState.RTCPeerConnectionStateDisconnected ||
-                 state == RTCPeerConnectionState.RTCPeerConnectionStateFailed) {
-        _callStatus = CallStatus.ended;
-        onCallStatusChanged?.call(_callStatus);
-      }
-    };
-    
-    _peerConnection = pc;
-    return pc;
+    // TODO: 集成GPUImage或自定义Shader实现美颜
+    // 当前版本使用基础参数调节
+    debugPrint('应用美颜滤镜: ${_config.beautyFilter.displayName}');
   }
 
   /// 发起通话
-  Future<void> makeCall(String targetUserId, {CallType callType = CallType.video}) async {
-    if (_callStatus != CallStatus.idle) {
-      debugPrint('Already in a call');
-      return;
+  Future<void> startCall({
+    required String calleeId,
+    required String calleeName,
+    String? calleeAvatar,
+    required CallType callType,
+  }) async {
+    try {
+      _setCallState(CallState.calling);
+      
+      // 创建会话
+      _currentSession = WebRTCSession(
+        sessionId: _generateSessionId(),
+        callerId: 'current_user_id', // TODO: 从用户服务获取
+        callerName: 'Current User',
+        calleeId: calleeId,
+        calleeName: calleeName,
+        calleeAvatar: calleeAvatar,
+        callType: callType,
+        createdAt: DateTime.now(),
+      );
+
+      // 获取本地媒体流
+      await _getLocalStream();
+
+      // 创建PeerConnection
+      await _createPeerConnection();
+
+      // 创建Offer
+      final offer = await _peerConnection!.createOffer({
+        'mandatory': {
+          'OfferToReceiveAudio': true,
+          'OfferToReceiveVideo': callType != CallType.audio,
+        },
+        'optional': [],
+      });
+
+      await _peerConnection!.setLocalDescription(offer);
+
+      // 发送Offer信令
+      _sendSignalingMessage(SignalingType.offer, {
+        'sdp': offer.sdp,
+        'type': offer.type,
+      });
+
+      notifyListeners();
+    } catch (e) {
+      _handleError('发起通话失败: $e');
     }
-    
-    _targetUserId = targetUserId;
-    _callType = callType;
-    _callId = _generateCallId();
-    
-    // 获取本地媒体流
-    await _acquireLocalMedia(callType);
-    
-    // 发送呼叫请求
-    _callStatus = CallStatus.calling;
-    onCallStatusChanged?.call(_callStatus);
-    
-    _sendSignaling({
-      'type': 'call',
-      'calleeId': targetUserId,
-      'callType': callType == CallType.video ? 'video' : 'audio',
-    });
-    
-    // 创建WebRTC连接并发送offer
-    final pc = await _createPeerConnection();
-    final offer = await pc.createOffer({});
-    await pc.setLocalDescription(offer);
-    
-    _sendSignaling({
-      'type': 'offer',
-      'targetUserId': targetUserId,
-      'sdp': pc.localDescription?.sdp,
-    });
   }
 
-  /// 接收通话
-  Future<void> acceptCall(String callId) async {
-    _callId = callId;
-    
-    await _acquireLocalMedia(_callType);
-    
-    _sendSignaling({
-      'type': 'accept_call',
-      'callId': callId,
-    });
-    
-    await _createPeerConnection();
+  /// 接听通话
+  Future<void> answerCall(WebRTCSession session) async {
+    try {
+      _currentSession = session;
+      _setCallState(CallState.connecting);
+
+      // 获取本地媒体流
+      await _getLocalStream();
+
+      // 创建PeerConnection
+      await _createPeerConnection();
+
+      notifyListeners();
+    } catch (e) {
+      _handleError('接听通话失败: $e');
+    }
   }
 
   /// 拒绝通话
-  void rejectCall(String callId) {
-    _sendSignaling({
-      'type': 'reject_call',
-      'callId': callId,
+  Future<void> rejectCall() async {
+    if (_currentSession != null) {
+      _sendSignalingMessage(SignalingType.leave, {
+        'reason': 'rejected',
+      });
+      await _endCall();
+    }
+  }
+
+  /// 结束通话
+  Future<void> endCall() async {
+    _sendSignalingMessage(SignalingType.leave, {
+      'reason': 'ended',
     });
-    
-    _cleanup();
-  }
-
-  /// 挂断通话
-  void hangup() {
-    _sendSignaling({
-      'type': 'hangup',
-      'callId': _callId,
-    });
-    
-    _cleanup();
-  }
-
-  /// 获取本地媒体流
-  Future<MediaStream> _acquireLocalMedia(CallType callType) async {
-    final constraints = {
-      'audio': true,
-      'video': callType == CallType.video,
-    };
-    
-    try {
-      _localStream = await navigator.mediaDevices.getUserMedia(constraints);
-      onLocalStream?.call(_localStream!);
-      return _localStream!;
-    } catch (e) {
-      debugPrint('Failed to get local media: $e');
-      rethrow;
-    }
-  }
-
-  /// 处理offer
-  Future<void> _handleOffer(Map<String, dynamic> message) async {
-    _targetUserId = message['fromUserId'] as String;
-    
-    final pc = await _createPeerConnection();
-    await pc.setRemoteDescription(
-      RTCSessionDescription(message['sdp'] as String, 'offer'),
-    );
-    
-    final answer = await pc.createAnswer({});
-    await pc.setLocalDescription(answer);
-    
-    _sendSignaling({
-      'type': 'answer',
-      'targetUserId': message['fromUserId'],
-      'sdp': pc.localDescription?.sdp,
-    });
-  }
-
-  /// 处理answer
-  Future<void> _handleAnswer(Map<String, dynamic> message) async {
-    if (_peerConnection != null) {
-      await _peerConnection!.setRemoteDescription(
-        RTCSessionDescription(message['sdp'] as String, 'answer'),
-      );
-    }
-  }
-
-  /// 处理ICE候选
-  Future<void> _handleIceCandidate(Map<String, dynamic> message) async {
-    if (_peerConnection != null) {
-      await _peerConnection!.addCandidate(
-        RTCIceCandidate(
-          message['candidate'] as String,
-          message['sdpMid'] as String?,
-          message['sdpMLineIndex'] as int?,
-        ),
-      );
-    }
-  }
-
-  /// 处理来电
-  void _handleIncomingCall(Map<String, dynamic> message) {
-    _callId = message['callId'] as String;
-    _callType = message['callType'] == 'video' ? CallType.video : CallType.audio;
-    _targetUserId = message['callerId'] as String;
-    _callStatus = CallStatus.ringing;
-    onCallStatusChanged?.call(_callStatus);
-    
-    onIncomingCall?.call(CallInfo(
-      callId: _callId,
-      callerId: _targetUserId,
-      calleeId: _currentUserId,
-      callType: _callType,
-      status: _callStatus,
-      startTime: DateTime.now(),
-    ));
-  }
-
-  /// 处理通话被接受
-  void _handleCallAccepted(Map<String, dynamic> message) {
-    _callStatus = CallStatus.connected;
-    onCallStatusChanged?.call(_callStatus);
-  }
-
-  /// 处理通话被拒绝
-  void _handleCallRejected(Map<String, dynamic> message) {
-    _callStatus = CallStatus.ended;
-    _cleanup();
-    onError?.call('Call rejected');
-  }
-
-  /// 处理通话结束
-  void _handleCallEnded(Map<String, dynamic> message) {
-    _cleanup();
-    onCleanup?.call();
-  }
-
-  /// 切换音频
-  void toggleAudio() {
-    if (_localStream != null) {
-      final audioTrack = _localStream!.getAudioTracks().firstOrNull;
-      if (audioTrack != null) {
-        _audioEnabled = !_audioEnabled;
-        audioTrack.enabled = _audioEnabled;
-        
-        _sendSignaling({
-          'type': 'toggle_audio',
-          'enabled': _audioEnabled,
-        });
-        
-        onAudioChanged?.call(_audioEnabled);
-      }
-    }
-  }
-
-  /// 切换视频
-  void toggleVideo() {
-    if (_localStream != null) {
-      final videoTrack = _localStream!.getVideoTracks().firstOrNull;
-      if (videoTrack != null) {
-        _videoEnabled = !_videoEnabled;
-        videoTrack.enabled = _videoEnabled;
-        
-        _sendSignaling({
-          'type': 'toggle_video',
-          'enabled': _videoEnabled,
-        });
-        
-        onVideoChanged?.call(_videoEnabled);
-      }
-    }
+    await _endCall();
   }
 
   /// 切换摄像头
   Future<void> switchCamera() async {
-    if (_localStream == null || _callType != CallType.video) return;
+    if (_localStream != null) {
+      final videoTrack = _localStream!
+          .getVideoTracks()
+          .firstWhere((track) => track.kind == 'video');
+      await Helper.switchCamera(videoTrack);
+    }
+  }
+
+  /// 切换麦克风
+  Future<void> toggleMute() async {
+    if (_localStream != null) {
+      final audioTrack = _localStream!.getAudioTracks().first;
+      final enabled = audioTrack.enabled;
+      audioTrack.enabled = !enabled;
+      
+      _sendSignalingMessage(enabled ? SignalingType.mute : SignalingType.unmute, {});
+      notifyListeners();
+    }
+  }
+
+  /// 切换视频
+  Future<void> toggleVideo() async {
+    if (_localStream != null) {
+      final videoTrack = _localStream!.getVideoTracks().first;
+      videoTrack.enabled = !videoTrack.enabled;
+      notifyListeners();
+    }
+  }
+
+  /// 开始屏幕共享
+  Future<void> startScreenShare() async {
+    try {
+      final screenStream = await navigator.mediaDevices.getDisplayMedia({
+        'video': true,
+        'audio': true,
+      });
+
+      // 替换视频轨道
+      final screenTrack = screenStream.getVideoTracks().first;
+      final sender = _peerConnection!.getSenders().firstWhere(
+        (s) => s.track?.kind == 'video',
+      );
+      await sender.replaceTrack(screenTrack);
+
+      _sendSignalingMessage(SignalingType.screenShareStart, {});
+      notifyListeners();
+    } catch (e) {
+      _handleError('屏幕共享失败: $e');
+    }
+  }
+
+  /// 停止屏幕共享
+  Future<void> stopScreenShare() async {
+    try {
+      // 恢复摄像头视频
+      final videoTrack = _localStream!.getVideoTracks().first;
+      final sender = _peerConnection!.getSenders().firstWhere(
+        (s) => s.track?.kind == 'video',
+      );
+      await sender.replaceTrack(videoTrack);
+
+      _sendSignalingMessage(SignalingType.screenShareStop, {});
+      notifyListeners();
+    } catch (e) {
+      _handleError('停止屏幕共享失败: $e');
+    }
+  }
+
+  /// 切换视频质量
+  Future<void> changeVideoQuality(VideoQuality quality) async {
+    _config = WebRTCConfig(
+      iceServers: _config.iceServers,
+      enableAudio: _config.enableAudio,
+      enableVideo: _config.enableVideo,
+      videoQuality: quality,
+      enableBeautyFilter: _config.enableBeautyFilter,
+      beautyFilter: _config.beautyFilter,
+    );
+
+    // 应用新的编码参数
+    final resolution = _config.videoResolution;
+    final params = {
+      'mandatory': {
+        'minWidth': resolution['width'],
+        'minHeight': resolution['height'],
+        'maxWidth': resolution['width'],
+        'maxHeight': resolution['height'],
+      },
+      'optional': [],
+    };
+
+    // 重新获取媒体流
+    await _getLocalStream();
     
-    final videoTrack = _localStream!.getVideoTracks().firstOrNull;
-    if (videoTrack == null) return;
-    
-    // 切换摄像头
-    await Helper.switchCamera(track: videoTrack);
+    notifyListeners();
   }
 
   /// 获取本地媒体流
-  MediaStream? getLocalStream() => _localStream;
-
-  /// 获取远程媒体流
-  MediaStream? getRemoteStream() => _remoteStream;
-
-  /// 获取通话状态
-  CallStatus getCallStatus() => _callStatus;
-
-  /// 是否启用音频
-  bool isAudioEnabled() => _audioEnabled;
-
-  /// 是否启用视频
-  bool isVideoEnabled() => _videoEnabled;
-
-  /// 生成通话ID
-  String _generateCallId() => 'call_${DateTime.now().millisecondsSinceEpoch}';
-
-  /// 清理资源
-  void _cleanup() {
-    _localStream?.getTracks().forEach((track) => track.stop());
-    _localStream = null;
+  Future<void> _getLocalStream() async {
+    final resolution = _config.videoResolution;
     
-    _peerConnection?.close();
-    _peerConnection = null;
-    
-    _remoteStream = null;
-    _callStatus = CallStatus.idle;
-    _callId = '';
-    
-    onCleanup?.call();
+    final Map<String, dynamic> mediaConstraints = {
+      'audio': _config.enableAudio ? {
+        'echoCancellation': _config.enableEchoCancellation,
+        'noiseSuppression': _config.enableNoiseSuppression,
+        'autoGainControl': _config.enableAutoGainControl,
+      } : false,
+      'video': _config.enableVideo ? {
+        'width': resolution['width'],
+        'height': resolution['height'],
+        'facingMode': 'user',
+      } : false,
+    };
+
+    _localStream = await navigator.mediaDevices.getUserMedia(mediaConstraints);
+    localRenderer.srcObject = _localStream;
+
+    notifyListeners();
   }
 
-  /// 销毁服务
-  void destroy() {
-    hangup();
-    _stopPing();
+  /// 创建PeerConnection
+  Future<void> _createPeerConnection() async {
+    final Map<String, dynamic> configuration = {
+      'iceServers': _config.iceServers.map((s) => s.toJson()).toList(),
+      'iceTransportPolicy': 'all',
+      'bundlePolicy': 'max-bundle',
+      'rtcpMuxPolicy': 'require',
+    };
+
+    _peerConnection = await createPeerConnection(configuration);
+
+    // 添加本地流
+    _localStream?.getTracks().forEach((track) {
+      _peerConnection!.addTrack(track, _localStream!);
+    });
+
+    // ICE候选事件
+    _peerConnection!.onIceCandidate = (RTCIceCandidate candidate) {
+      _sendSignalingMessage(SignalingType.iceCandidate, {
+        'candidate': candidate.candidate,
+        'sdpMid': candidate.sdpMid,
+        'sdpMLineIndex': candidate.sdpMLineIndex,
+      });
+    };
+
+    // 远程流事件
+    _peerConnection!.onTrack = (RTCTrackEvent event) {
+      if (event.streams.isNotEmpty) {
+        _remoteStream = event.streams[0];
+        remoteRenderer.srcObject = _remoteStream;
+        notifyListeners();
+      }
+    };
+
+    // 连接状态变化
+    _peerConnection!.onConnectionState = (RTCPeerConnectionState state) {
+      _handleConnectionStateChange(state);
+    };
+
+    // ICE连接状态
+    _peerConnection!.onIceConnectionState = (RTCIceConnectionState state) {
+      debugPrint('ICE连接状态: $state');
+    };
+  }
+
+  /// 处理连接状态变化
+  void _handleConnectionStateChange(RTCPeerConnectionState state) {
+    debugPrint('PeerConnection状态: $state');
     
-    _ws?.close();
-    _ws = null;
+    switch (state) {
+      case RTCPeerConnectionState.RTCPeerConnectionStateConnected:
+        _setCallState(CallState.connected);
+        _currentSession?.startTime = DateTime.now();
+        _startStatsTimer();
+        _startCallDurationTimer();
+        onCallConnected?.call(_currentSession!.sessionId);
+        break;
+      case RTCPeerConnectionState.RTCPeerConnectionStateDisconnected:
+        _setCallState(CallState.reconnecting);
+        _startReconnectTimer();
+        break;
+      case RTCPeerConnectionState.RTCPeerConnectionStateFailed:
+        _handleError('连接失败');
+        break;
+      case RTCPeerConnectionState.RTCPeerConnectionStateClosed:
+        _endCall();
+        break;
+      default:
+        break;
+    }
+    notifyListeners();
+  }
+
+  /// 处理Offer信令
+  Future<void> handleOffer(Map<String, dynamic> offer) async {
+    try {
+      await _peerConnection!.setRemoteDescription(
+        RTCSessionDescription(offer['sdp'], offer['type']),
+      );
+
+      // 创建Answer
+      final answer = await _peerConnection!.createAnswer({
+        'mandatory': {
+          'OfferToReceiveAudio': true,
+          'OfferToReceiveVideo': _currentSession?.callType != CallType.audio,
+        },
+        'optional': [],
+      });
+
+      await _peerConnection!.setLocalDescription(answer);
+
+      // 发送Answer
+      _sendSignalingMessage(SignalingType.answer, {
+        'sdp': answer.sdp,
+        'type': answer.type,
+      });
+    } catch (e) {
+      _handleError('处理Offer失败: $e');
+    }
+  }
+
+  /// 处理Answer信令
+  Future<void> handleAnswer(Map<String, dynamic> answer) async {
+    try {
+      await _peerConnection!.setRemoteDescription(
+        RTCSessionDescription(answer['sdp'], answer['type']),
+      );
+    } catch (e) {
+      _handleError('处理Answer失败: $e');
+    }
+  }
+
+  /// 处理ICE候选
+  Future<void> handleIceCandidate(Map<String, dynamic> candidate) async {
+    try {
+      await _peerConnection!.addCandidate(
+        RTCIceCandidate(
+          candidate['candidate'],
+          candidate['sdpMid'],
+          candidate['sdpMLineIndex'],
+        ),
+      );
+    } catch (e) {
+      debugPrint('添加ICE候选失败: $e');
+    }
+  }
+
+  /// 发送信令消息
+  void _sendSignalingMessage(SignalingType type, dynamic data) {
+    final message = SignalingMessage(
+      type: type.name,
+      sessionId: _currentSession?.sessionId ?? '',
+      fromUserId: 'current_user_id',
+      toUserId: _currentSession?.calleeId ?? '',
+      data: data,
+      timestamp: DateTime.now(),
+    );
+    
+    // TODO: 通过WebSocket发送
+    debugPrint('发送信令: ${message.toJson()}');
+  }
+
+  /// 开始统计定时器
+  void _startStatsTimer() {
+    _statsTimer?.cancel();
+    _statsTimer = Timer.periodic(const Duration(seconds: 2), (timer) {
+      _collectStats();
+    });
+  }
+
+  /// 收集统计信息
+  Future<void> _collectStats() async {
+    if (_peerConnection == null) return;
+
+    try {
+      final stats = await _peerConnection!.getStats();
+      
+      int rtt = 0;
+      double packetLoss = 0;
+      int bitrate = 0;
+      int jitter = 0;
+      int bytesSent = 0;
+      int bytesReceived = 0;
+      int audioLevel = 0;
+      int frameRate = 0;
+
+      for (var report in stats) {
+        if (report.type == 'candidate-pair' && report.selected == true) {
+          rtt = (report.currentRoundTripTime * 1000).toInt();
+        }
+        if (report.type == 'inbound-rtp') {
+          packetLoss = report.packetsLost / (report.packetsReceived + report.packetsLost) * 100;
+          bytesReceived = report.bytesReceived ?? 0;
+          jitter = (report.jitter * 1000).toInt();
+          frameRate = report.framesPerSecond ?? 0;
+        }
+        if (report.type == 'outbound-rtp') {
+          bytesSent = report.bytesSent ?? 0;
+        }
+        if (report.type == 'track') {
+          audioLevel = ((report.audioLevel ?? 0) * 100).toInt();
+        }
+      }
+
+      _networkStats = NetworkStats(
+        rtt: rtt,
+        packetLossRate: packetLoss,
+        bitrate: bitrate,
+        jitter: jitter,
+        bytesSent: bytesSent,
+        bytesReceived: bytesReceived,
+        audioLevel: audioLevel,
+        frameRate: frameRate,
+        timestamp: DateTime.now(),
+      );
+
+      _statsController.add(_networkStats!);
+
+      // 弱网适配
+      _handleWeakNetwork(_networkStats!);
+
+      notifyListeners();
+    } catch (e) {
+      debugPrint('收集统计信息失败: $e');
+    }
+  }
+
+  /// 处理弱网情况
+  void _handleWeakNetwork(NetworkStats stats) {
+    if (!_weakNetworkConfig.enableAutoAdaptation) return;
+
+    final quality = stats.quality;
+    onNetworkQualityChanged?.call(quality);
+
+    switch (_weakNetworkConfig.strategy) {
+      case WeakNetworkStrategy.auto:
+        if (stats.rtt > _weakNetworkConfig.audioOnlyRtt) {
+          // 切换到纯音频
+          _disableVideo();
+        } else if (stats.rtt > _weakNetworkConfig.disableVideoRtt) {
+          // 关闭视频
+          _disableVideo();
+        } else if (stats.rtt > _weakNetworkConfig.reduceQualityRtt) {
+          // 降低视频质量
+          changeVideoQuality(VideoQuality.low);
+        }
+        break;
+      case WeakNetworkStrategy.reduceQuality:
+        if (quality.index >= NetworkQuality.poor.index) {
+          changeVideoQuality(VideoQuality.low);
+        }
+        break;
+      case WeakNetworkStrategy.disableVideo:
+        if (quality.index >= NetworkQuality.poor.index) {
+          _disableVideo();
+        }
+        break;
+      case WeakNetworkStrategy.audioOnly:
+        if (quality.index >= NetworkQuality.fair.index) {
+          _disableVideo();
+        }
+        break;
+    }
+  }
+
+  /// 关闭视频（弱网适配）
+  void _disableVideo() {
+    if (_localStream != null) {
+      final videoTrack = _localStream!.getVideoTracks().first;
+      videoTrack.enabled = false;
+      notifyListeners();
+    }
+  }
+
+  /// 开始通话时长定时器
+  void _startCallDurationTimer() {
+    _callDurationTimer?.cancel();
+    _callDurationTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      notifyListeners();
+    });
+  }
+
+  /// 开始重连定时器
+  void _startReconnectTimer() {
+    if (_reconnectAttempts >= maxReconnectAttempts) {
+      _handleError('重连次数超过上限');
+      return;
+    }
+
+    _reconnectTimer?.cancel();
+    _reconnectAttempts++;
+    
+    final delay = Duration(seconds: pow(2, _reconnectAttempts).toInt());
+    debugPrint('${_reconnectAttempts}秒后尝试重连...');
+    
+    _reconnectTimer = Timer(delay, () {
+      _reconnect();
+    });
+  }
+
+  /// 重连
+  Future<void> _reconnect() async {
+    try {
+      _setCallState(CallState.reconnecting);
+      
+      // 关闭旧连接
+      await _peerConnection?.close();
+      
+      // 重新创建连接
+      await _createPeerConnection();
+      
+      // 如果是呼叫方，重新发送Offer
+      if (_currentSession?.callerId == 'current_user_id') {
+        final offer = await _peerConnection!.createOffer({
+          'mandatory': {
+            'OfferToReceiveAudio': true,
+            'OfferToReceiveVideo': _currentSession?.callType != CallType.audio,
+          },
+          'optional': [],
+        });
+        await _peerConnection!.setLocalDescription(offer);
+        _sendSignalingMessage(SignalingType.offer, {
+          'sdp': offer.sdp,
+          'type': offer.type,
+        });
+      }
+    } catch (e) {
+      _handleError('重连失败: $e');
+    }
+  }
+
+  /// 设置通话状态
+  void _setCallState(CallState state) {
+    _callState = state;
+    _currentSession?.state = state;
+    notifyListeners();
+  }
+
+  /// 处理错误
+  void _handleError(String error) {
+    debugPrint('WebRTC错误: $error');
+    _setCallState(CallState.failed);
+    onError?.call(error);
+  }
+
+  /// 结束通话
+  Future<void> _endCall() async {
+    _setCallState(CallState.ended);
+    
+    if (_currentSession != null) {
+      _currentSession!.endTime = DateTime.now();
+      
+      // 保存通话记录
+      await _saveCallHistory();
+      
+      onCallEnded?.call(_currentSession!.sessionId);
+    }
+
+    // 清理资源
+    await _cleanup();
+    
+    notifyListeners();
+  }
+
+  /// 保存通话记录
+  Future<void> _saveCallHistory() async {
+    if (_currentSession == null) return;
+
+    final history = CallHistory(
+      id: _generateSessionId(),
+      sessionId: _currentSession!.sessionId,
+      peerId: _currentSession!.calleeId,
+      peerName: _currentSession!.calleeName,
+      peerAvatar: _currentSession!.calleeAvatar,
+      callType: _currentSession!.callType,
+      isOutgoing: _currentSession!.callerId == 'current_user_id',
+      isConnected: _currentSession!.startTime != null,
+      startTime: _currentSession!.createdAt,
+      endTime: _currentSession!.endTime,
+      duration: _currentSession!.durationInSeconds,
+    );
+
+    // TODO: 保存到本地数据库
+    debugPrint('保存通话记录: ${history.toJson()}');
+  }
+
+  /// 清理资源
+  Future<void> _cleanup() async {
+    _statsTimer?.cancel();
+    _reconnectTimer?.cancel();
+    _callDurationTimer?.cancel();
+
+    await _peerConnection?.close();
+    _peerConnection = null;
+
+    _localStream?.getTracks().forEach((track) => track.stop());
+    _localStream = null;
+
+    _remoteStream = null;
+    localRenderer.srcObject = null;
+    remoteRenderer.srcObject = null;
+
+    _participants.clear();
+    _networkStats = null;
+    _currentSession = null;
+    _reconnectAttempts = 0;
+  }
+
+  /// 生成会话ID
+  String _generateSessionId() {
+    return '${DateTime.now().millisecondsSinceEpoch}_${Random().nextInt(10000)}';
+  }
+
+  /// 释放资源
+  @override
+  void dispose() {
+    _cleanup();
+    localRenderer.dispose();
+    remoteRenderer.dispose();
+    _signalingController.close();
+    _statsController.close();
+    super.dispose();
+  }
+
+  /// 检查是否有正在进行的通话
+  bool get hasActiveCall => 
+      _callState == CallState.calling || 
+      _callState == CallState.ringing || 
+      _callState == CallState.connecting || 
+      _callState == CallState.connected ||
+      _callState == CallState.reconnecting;
+
+  /// 获取当前通话时长
+  String get currentCallDuration {
+    if (_currentSession?.startTime == null) return '00:00';
+    return _currentSession!.formattedDuration;
+  }
+
+  /// 获取麦克风状态
+  bool get isMicEnabled {
+    if (_localStream == null) return true;
+    return _localStream!.getAudioTracks().first.enabled;
+  }
+
+  /// 获取摄像头状态
+  bool get isCameraEnabled {
+    if (_localStream == null) return true;
+    return _localStream!.getVideoTracks().first.enabled;
   }
 }

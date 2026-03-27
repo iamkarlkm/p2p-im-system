@@ -1,0 +1,855 @@
+/**
+ * 零信任安全面板样式
+ * Zero Trust Security Panel Styles
+ * 
+ * 深色主题设计，现代UI风格
+ */
+
+/* ============================================================================
+   变量定义
+   ============================================================================ */
+
+:root {
+  --zt-bg-primary: #1a1a2e;
+  --zt-bg-secondary: #16213e;
+  --zt-bg-card: #0f3460;
+  --zt-bg-hover: #1e4d7b;
+  
+  --zt-text-primary: #eaeaea;
+  --zt-text-secondary: #a0a0a0;
+  --zt-text-muted: #666666;
+  
+  --zt-accent-primary: #e94560;
+  --zt-accent-secondary: #533483;
+  --zt-accent-success: #4CAF50;
+  --zt-accent-warning: #FFC107;
+  --zt-accent-danger: #F44336;
+  --zt-accent-info: #2196F3;
+  
+  --zt-border-radius: 12px;
+  --zt-border-radius-sm: 8px;
+  --zt-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  --zt-shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.5);
+  
+  --zt-transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ============================================================================
+   面板主容器
+   ============================================================================ */
+
+.zt-panel {
+  background: var(--zt-bg-primary);
+  border-radius: var(--zt-border-radius);
+  box-shadow: var(--zt-shadow-lg);
+  color: var(--zt-text-primary);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  min-width: 480px;
+  max-width: 640px;
+  overflow: hidden;
+}
+
+.zt-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 40px;
+  gap: 20px;
+}
+
+/* ============================================================================
+   头部样式
+   ============================================================================ */
+
+.zt-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  background: linear-gradient(135deg, var(--zt-bg-secondary) 0%, var(--zt-bg-card) 100%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.zt-header-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.zt-header-title h2 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  background: linear-gradient(90deg, var(--zt-text-primary), var(--zt-accent-primary));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.zt-shield-icon {
+  font-size: 28px;
+  filter: drop-shadow(0 0 8px rgba(233, 69, 96, 0.5));
+}
+
+.zt-header-actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* ============================================================================
+   设备信息栏
+   ============================================================================ */
+
+.zt-device-bar {
+  padding: 16px 24px;
+  background: var(--zt-bg-secondary);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.zt-device-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.zt-device-name {
+  font-weight: 600;
+  font-size: 16px;
+  color: var(--zt-text-primary);
+}
+
+.zt-device-type {
+  font-size: 12px;
+  color: var(--zt-text-secondary);
+  background: var(--zt-bg-card);
+  padding: 2px 8px;
+  border-radius: 12px;
+}
+
+.zt-device-meta {
+  display: flex;
+  gap: 16px;
+  font-size: 12px;
+  color: var(--zt-text-muted);
+}
+
+/* ============================================================================
+   隔离状态徽章
+   ============================================================================ */
+
+.zt-isolation-badge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.zt-isolation-clean {
+  background: rgba(76, 175, 80, 0.2);
+  color: #4CAF50;
+  border: 1px solid rgba(76, 175, 80, 0.3);
+}
+
+.zt-isolation-quarantine {
+  background: rgba(255, 193, 7, 0.2);
+  color: #FFC107;
+  border: 1px solid rgba(255, 193, 7, 0.3);
+}
+
+.zt-isolation-isolated {
+  background: rgba(244, 67, 54, 0.2);
+  color: #F44336;
+  border: 1px solid rgba(244, 67, 54, 0.3);
+  animation: pulse-red 2s infinite;
+}
+
+.zt-isolation-restricted {
+  background: rgba(255, 152, 0, 0.2);
+  color: #FF9800;
+  border: 1px solid rgba(255, 152, 0, 0.3);
+}
+
+@keyframes pulse-red {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(244, 67, 54, 0.4); }
+  50% { box-shadow: 0 0 0 8px rgba(244, 67, 54, 0); }
+}
+
+/* ============================================================================
+   标签导航
+   ============================================================================ */
+
+.zt-tabs {
+  display: flex;
+  background: var(--zt-bg-secondary);
+  padding: 4px;
+  gap: 4px;
+}
+
+.zt-tab {
+  flex: 1;
+  padding: 12px 16px;
+  background: transparent;
+  border: none;
+  color: var(--zt-text-secondary);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  border-radius: var(--zt-border-radius-sm);
+  transition: var(--zt-transition);
+}
+
+.zt-tab:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--zt-text-primary);
+}
+
+.zt-tab-active {
+  background: var(--zt-bg-card);
+  color: var(--zt-text-primary);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* ============================================================================
+   内容区域
+   ============================================================================ */
+
+.zt-content {
+  padding: 24px;
+  min-height: 400px;
+  max-height: 600px;
+  overflow-y: auto;
+}
+
+/* ============================================================================
+   总览标签
+   ============================================================================ */
+
+.zt-overview {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.zt-scores-row {
+  display: flex;
+  justify-content: center;
+  gap: 40px;
+  padding: 20px;
+  background: var(--zt-bg-secondary);
+  border-radius: var(--zt-border-radius);
+}
+
+.zt-score-ring-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.zt-score-content {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.zt-score-value {
+  font-size: 32px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.zt-score-label {
+  font-size: 12px;
+  color: var(--zt-text-secondary);
+  margin-top: 4px;
+}
+
+.zt-score-ring-progress {
+  transition: stroke-dashoffset 0.8s ease-out;
+}
+
+/* 状态卡片 */
+.zt-status-cards {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.zt-status-card {
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  background: var(--zt-bg-secondary);
+  border-radius: var(--zt-border-radius-sm);
+  gap: 8px;
+}
+
+.zt-status-label {
+  font-size: 12px;
+  color: var(--zt-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.zt-status-value {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.zt-status-ok {
+  color: var(--zt-accent-success);
+}
+
+.zt-status-fail {
+  color: var(--zt-accent-danger);
+}
+
+.zt-status-warning {
+  color: var(--zt-accent-warning);
+}
+
+/* 漏洞提示 */
+.zt-vulnerabilities {
+  padding: 16px;
+  background: rgba(244, 67, 54, 0.1);
+  border: 1px solid rgba(244, 67, 54, 0.2);
+  border-radius: var(--zt-border-radius-sm);
+}
+
+.zt-vulnerabilities h4 {
+  margin: 0 0 12px 0;
+  color: var(--zt-accent-danger);
+  font-size: 14px;
+}
+
+.zt-vulnerabilities ul {
+  margin: 0;
+  padding-left: 20px;
+  color: var(--zt-text-secondary);
+  font-size: 13px;
+}
+
+.zt-vulnerabilities li {
+  margin-bottom: 6px;
+}
+
+/* 隔离控制 */
+.zt-isolation-controls {
+  display: flex;
+  justify-content: center;
+  padding: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* ============================================================================
+   合规检查标签
+   ============================================================================ */
+
+.zt-compliance-list h3 {
+  margin: 0 0 16px 0;
+  font-size: 16px;
+  color: var(--zt-text-primary);
+}
+
+.zt-compliance-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.zt-compliance-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px;
+  background: var(--zt-bg-secondary);
+  border-radius: var(--zt-border-radius-sm);
+  border-left: 3px solid transparent;
+}
+
+.zt-compliance-icon {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-weight: 700;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.zt-status-pass {
+  border-left-color: var(--zt-accent-success);
+}
+
+.zt-status-pass .zt-compliance-icon {
+  background: rgba(76, 175, 80, 0.2);
+  color: var(--zt-accent-success);
+}
+
+.zt-status-fail {
+  border-left-color: var(--zt-accent-danger);
+}
+
+.zt-status-fail .zt-compliance-icon {
+  background: rgba(244, 67, 54, 0.2);
+  color: var(--zt-accent-danger);
+}
+
+.zt-status-warning {
+  border-left-color: var(--zt-accent-warning);
+}
+
+.zt-status-warning .zt-compliance-icon {
+  background: rgba(255, 193, 7, 0.2);
+  color: var(--zt-accent-warning);
+}
+
+.zt-status-unknown {
+  border-left-color: var(--zt-text-muted);
+}
+
+.zt-status-unknown .zt-compliance-icon {
+  background: rgba(160, 160, 160, 0.2);
+  color: var(--zt-text-secondary);
+}
+
+.zt-compliance-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+  min-width: 0;
+}
+
+.zt-compliance-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--zt-text-primary);
+}
+
+.zt-compliance-details {
+  font-size: 12px;
+  color: var(--zt-text-secondary);
+  word-break: break-word;
+}
+
+.zt-compliance-time {
+  font-size: 11px;
+  color: var(--zt-text-muted);
+}
+
+.zt-assessment-info {
+  padding: 16px;
+  background: var(--zt-bg-secondary);
+  border-radius: var(--zt-border-radius-sm);
+}
+
+.zt-assessment-info p {
+  margin: 0 0 8px 0;
+  font-size: 13px;
+  color: var(--zt-text-secondary);
+}
+
+.zt-assessment-info p:last-child {
+  margin-bottom: 0;
+}
+
+/* ============================================================================
+   访问历史标签
+   ============================================================================ */
+
+.zt-history-list h3 {
+  margin: 0 0 16px 0;
+  font-size: 16px;
+  color: var(--zt-text-primary);
+}
+
+.zt-empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--zt-text-muted);
+  font-size: 14px;
+}
+
+.zt-access-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.zt-access-item {
+  padding: 14px 16px;
+  background: var(--zt-bg-secondary);
+  border-radius: var(--zt-border-radius-sm);
+  cursor: pointer;
+  transition: var(--zt-transition);
+  border-left: 3px solid transparent;
+}
+
+.zt-access-item:hover {
+  background: var(--zt-bg-hover);
+  transform: translateX(4px);
+}
+
+.zt-access-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.zt-access-resource {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--zt-text-primary);
+}
+
+.zt-access-status {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 12px;
+  text-transform: uppercase;
+}
+
+.zt-access-allowed {
+  background: rgba(76, 175, 80, 0.2);
+  color: var(--zt-accent-success);
+}
+
+.zt-access-denied {
+  background: rgba(244, 67, 54, 0.2);
+  color: var(--zt-accent-danger);
+}
+
+.zt-access-mfa {
+  background: rgba(33, 150, 243, 0.2);
+  color: var(--zt-accent-info);
+}
+
+.zt-access-pending {
+  background: rgba(255, 193, 7, 0.2);
+  color: var(--zt-accent-warning);
+}
+
+.zt-access-details {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.zt-access-action {
+  font-size: 12px;
+  color: var(--zt-text-secondary);
+}
+
+.zt-access-risk {
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.zt-risk-high {
+  color: var(--zt-accent-danger);
+}
+
+.zt-risk-medium {
+  color: var(--zt-accent-warning);
+}
+
+.zt-risk-low {
+  color: var(--zt-accent-success);
+}
+
+.zt-access-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--zt-text-muted);
+}
+
+.zt-access-reason {
+  color: var(--zt-text-secondary);
+  font-style: italic;
+}
+
+/* ============================================================================
+   按钮样式
+   ============================================================================ */
+
+.zt-btn-icon {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--zt-border-radius-sm);
+  color: var(--zt-text-secondary);
+  cursor: pointer;
+  transition: var(--zt-transition);
+  font-size: 16px;
+}
+
+.zt-btn-icon:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--zt-text-primary);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.zt-btn-primary {
+  padding: 12px 24px;
+  background: linear-gradient(135deg, var(--zt-accent-primary), var(--zt-accent-secondary));
+  border: none;
+  border-radius: var(--zt-border-radius-sm);
+  color: white;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--zt-transition);
+}
+
+.zt-btn-primary:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(233, 69, 96, 0.4);
+}
+
+.zt-btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.zt-btn-secondary {
+  padding: 12px 24px;
+  background: var(--zt-bg-card);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--zt-border-radius-sm);
+  color: var(--zt-text-primary);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--zt-transition);
+}
+
+.zt-btn-secondary:hover {
+  background: var(--zt-bg-hover);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.zt-btn-danger {
+  padding: 12px 24px;
+  background: rgba(244, 67, 54, 0.2);
+  border: 1px solid rgba(244, 67, 54, 0.4);
+  border-radius: var(--zt-border-radius-sm);
+  color: var(--zt-accent-danger);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--zt-transition);
+}
+
+.zt-btn-danger:hover:not(:disabled) {
+  background: rgba(244, 67, 54, 0.3);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(244, 67, 54, 0.3);
+}
+
+.zt-btn-danger:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ============================================================================
+   模态对话框
+   ============================================================================ */
+
+.zt-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(4px);
+}
+
+.zt-modal {
+  background: var(--zt-bg-primary);
+  border-radius: var(--zt-border-radius);
+  padding: 24px;
+  min-width: 360px;
+  max-width: 480px;
+  box-shadow: var(--zt-shadow-lg);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.zt-modal h3 {
+  margin: 0 0 16px 0;
+  font-size: 18px;
+  color: var(--zt-text-primary);
+}
+
+.zt-modal p {
+  margin: 0 0 16px 0;
+  font-size: 14px;
+  color: var(--zt-text-secondary);
+  line-height: 1.5;
+}
+
+.zt-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+/* ============================================================================
+   表单元素
+   ============================================================================ */
+
+.zt-textarea {
+  width: 100%;
+  min-height: 80px;
+  padding: 12px;
+  background: var(--zt-bg-secondary);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--zt-border-radius-sm);
+  color: var(--zt-text-primary);
+  font-size: 14px;
+  resize: vertical;
+  transition: var(--zt-transition);
+  box-sizing: border-box;
+}
+
+.zt-textarea:focus {
+  outline: none;
+  border-color: var(--zt-accent-primary);
+  box-shadow: 0 0 0 3px rgba(233, 69, 96, 0.1);
+}
+
+.zt-input {
+  width: 100%;
+  padding: 14px;
+  background: var(--zt-bg-secondary);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--zt-border-radius-sm);
+  color: var(--zt-text-primary);
+  font-size: 18px;
+  text-align: center;
+  letter-spacing: 4px;
+  transition: var(--zt-transition);
+  box-sizing: border-box;
+}
+
+.zt-input:focus {
+  outline: none;
+  border-color: var(--zt-accent-primary);
+  box-shadow: 0 0 0 3px rgba(233, 69, 96, 0.1);
+}
+
+/* ============================================================================
+   MFA对话框特殊样式
+   ============================================================================ */
+
+.zt-mfa-modal {
+  text-align: center;
+}
+
+.zt-mfa-info {
+  background: var(--zt-bg-secondary);
+  padding: 16px;
+  border-radius: var(--zt-border-radius-sm);
+  margin-bottom: 20px;
+}
+
+.zt-mfa-info p {
+  margin: 0 0 8px 0;
+}
+
+.zt-mfa-info p:last-child {
+  margin-bottom: 0;
+}
+
+.zt-countdown {
+  color: var(--zt-accent-warning);
+  font-size: 18px;
+}
+
+.zt-mfa-methods {
+  margin-bottom: 20px;
+}
+
+.zt-mfa-badges {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+
+.zt-mfa-badge {
+  padding: 6px 14px;
+  background: var(--zt-bg-card);
+  border-radius: 12px;
+  font-size: 12px;
+  color: var(--zt-text-secondary);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.zt-mfa-input-group {
+  margin-bottom: 20px;
+}
+
+/* ============================================================================
+   加载动画
+   ============================================================================ */
+
+.zt-spinner {
+  width: 48px;
+  height: 48px;
+  border: 3px solid rgba(233, 69, 96, 0.2);
+  border-top-color: var(--zt-accent-primary);
+  border-radius: 50%;
+  animation: zt-spin 1s linear infinite;
+}
+
+@keyframes zt-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ============================================================================
+   滚动条样式
+   ============================================================================ */
+
+.zt-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.zt-content::-webkit-scrollbar-track {
+  background: var(--zt-bg-secondary);
+  border-radius: 4px;
+}
+
+.zt-content::-webkit-scrollbar-thumb {
+  background: var(--zt-bg-card);
+  border-radius: 4px;
+}
+
+.zt-content::-webkit-scrollbar-thumb:hover {
+  background: var(--zt-bg-hover);
+}

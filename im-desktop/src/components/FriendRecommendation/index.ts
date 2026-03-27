@@ -1,0 +1,1 @@
+export { FriendRecommendationPanel } from './FriendRecommendationPanel';
