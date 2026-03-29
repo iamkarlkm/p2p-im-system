@@ -1,0 +1,19 @@
+# 忽略所有顶层文件（除了IM项目文件夹和基本文档）
+*
+
+# 包含IM项目文件夹及其内容
+!/im-backend/
+!/im-desktop/
+!/im-mobile/
+
+# 强制跟踪这些文件夹中的所有内容（不包括.gitignore文件）
+!im-backend/**/*
+!im-desktop/**/*
+!im-mobile/**/*
+
+# 允许.gitignore本身被版本控制
+!.gitignore
+
+# 添加基本项目文档
+!README.md
+/im-backend/target

@@ -1,0 +1,265 @@
+@import '../../../styles/variables.less';
+
+.friend-recommendation-panel {
+  padding: 20px;
+  height: 100%;
+  overflow-y: auto;
+  background: @bg-color;
+
+  .panel-header {
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid @border-color;
+
+    h2 {
+      margin: 0 0 8px 0;
+      font-size: 20px;
+      font-weight: 600;
+      color: @text-primary;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+
+      .anticon {
+        color: @primary-color;
+      }
+    }
+
+    .subtitle {
+      color: @text-secondary;
+      font-size: 14px;
+    }
+  }
+
+  .recommendation-tabs {
+    margin-bottom: 20px;
+
+    .ant-tabs-nav {
+      margin-bottom: 16px;
+    }
+
+    .ant-tabs-tab {
+      padding: 12px 20px;
+      font-size: 14px;
+
+      .anticon {
+        margin-right: 6px;
+      }
+    }
+  }
+
+  .recommendation-content {
+    min-height: 400px;
+
+    .loading-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 400px;
+    }
+
+    .recommendation-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 16px;
+    }
+  }
+
+  .recommendation-card {
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    transition: all 0.3s ease;
+
+    &:hover {
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+      transform: translateY(-2px);
+    }
+
+    .ant-card-meta {
+      align-items: flex-start;
+    }
+
+    .ant-card-meta-avatar {
+      padding-right: 16px;
+    }
+
+    .ant-avatar {
+      border: 2px solid @border-color-light;
+    }
+
+    .user-header {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+
+      .nickname {
+        font-size: 16px;
+        font-weight: 600;
+        color: @text-primary;
+      }
+
+      .reason-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 12px;
+        padding: 2px 8px;
+        border-radius: 4px;
+
+        .reason-icon {
+          font-size: 12px;
+
+          &.mutual { color: @blue; }
+          &.interest { color: @green; }
+          &.group { color: @purple; }
+          &.mixed { color: @orange; }
+        }
+      }
+    }
+
+    .user-details {
+      margin-top: 12px;
+      color: @text-secondary;
+
+      .detail-item {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin-bottom: 6px;
+        font-size: 13px;
+
+        .anticon {
+          color: @text-tertiary;
+        }
+      }
+
+      .match-score {
+        margin-top: 10px;
+        padding-top: 10px;
+        border-top: 1px dashed @border-color;
+        font-size: 13px;
+        color: @text-secondary;
+
+        .score {
+          font-weight: 600;
+          color: @primary-color;
+          font-size: 15px;
+        }
+      }
+    }
+
+    .ant-card-actions {
+      border-top: 1px solid @border-color;
+      background: @bg-color-light;
+
+      li {
+        margin: 8px 0;
+
+        &:not(:last-child) {
+          border-right: 1px solid @border-color;
+        }
+      }
+
+      .add-btn {
+        background: @primary-color;
+        border-color: @primary-color;
+
+        &:hover {
+          background: @primary-color-hover;
+          border-color: @primary-color-hover;
+        }
+      }
+
+      .ignore-btn {
+        color: @text-secondary;
+
+        &:hover {
+          color: @text-primary;
+          background: @bg-color-hover;
+        }
+      }
+    }
+  }
+}
+
+// Dark theme support
+[data-theme='dark'] {
+  .friend-recommendation-panel {
+    background: @dark-bg-color;
+
+    .panel-header {
+      border-bottom-color: @dark-border-color;
+
+      h2 {
+        color: @dark-text-primary;
+      }
+
+      .subtitle {
+        color: @dark-text-secondary;
+      }
+    }
+
+    .recommendation-card {
+      background: @dark-component-bg;
+      border-color: @dark-border-color;
+
+      &:hover {
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+      }
+
+      .ant-avatar {
+        border-color: @dark-border-color;
+      }
+
+      .user-header {
+        .nickname {
+          color: @dark-text-primary;
+        }
+      }
+
+      .user-details {
+        color: @dark-text-secondary;
+
+        .match-score {
+          border-top-color: @dark-border-color;
+          color: @dark-text-secondary;
+
+          .score {
+            color: @dark-primary-color;
+          }
+        }
+      }
+
+      .ant-card-actions {
+        border-top-color: @dark-border-color;
+        background: @dark-bg-color-light;
+
+        li:not(:last-child) {
+          border-right-color: @dark-border-color;
+        }
+
+        .ignore-btn:hover {
+          background: @dark-bg-color-hover;
+        }
+      }
+    }
+  }
+}
+
+// Responsive
+@media (max-width: 768px) {
+  .friend-recommendation-panel {
+    padding: 12px;
+
+    .recommendation-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .recommendation-tabs {
+      .ant-tabs-tab {
+        padding: 8px 12px;
+        font-size: 13px;
+      }
+    }
+  }
+}

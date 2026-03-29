@@ -1,0 +1,183 @@
+/* 已读回执样式 */
+
+.read-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  font-size: 11px;
+  color: #888;
+}
+
+.read-status-badge .read-icon {
+  color: #4ade80;
+}
+
+.read-status-badge .read-count {
+  color: #aaa;
+}
+
+/* 未读消息数徽章 */
+.unread-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  background: #ff4757;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #fff;
+  position: absolute;
+  top: -8px;
+  right: -8px;
+}
+
+.unread-badge.zero {
+  display: none;
+}
+
+/* 已读列表 */
+.read-receipts-list {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.read-receipt-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border-bottom: 1px solid #eee;
+}
+
+.read-receipt-item:last-child {
+  border-bottom: none;
+}
+
+.read-receipt-item .avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #667eea;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-weight: 600;
+}
+
+.read-receipt-item .info {
+  flex: 1;
+}
+
+.read-receipt-item .username {
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+}
+
+.read-receipt-item .time {
+  font-size: 12px;
+  color: #888;
+}
+
+/* 已读指示器 */
+.message-item.read::after {
+  content: '✓✓';
+  position: absolute;
+  bottom: 4px;
+  right: 8px;
+  font-size: 10px;
+  color: #4ade80;
+}
+
+.message-item.some-read::after {
+  content: '✓✓';
+  position: absolute;
+  bottom: 4px;
+  right: 8px;
+  font-size: 10px;
+  color: #fbbf24;
+}
+
+/* 未读消息高亮 */
+.message-item.unread {
+  background: rgba(255, 255, 255, 0.95);
+}
+
+.message-item.unread::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: #667eea;
+}
+
+/* 已读状态弹窗 */
+.read-status-modal {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: #fff;
+  border-radius: 16px 16px 0 0;
+  max-height: 60vh;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+}
+
+.read-status-modal .header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  border-bottom: 1px solid #eee;
+}
+
+.read-status-modal .title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+}
+
+.read-status-modal .close-btn {
+  padding: 8px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #666;
+}
+
+/* 统计卡片 */
+.read-stats-card {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  padding: 16px;
+  background: #f8f9fa;
+  border-radius: 12px;
+  margin-bottom: 16px;
+}
+
+.read-stats-card .stat-item {
+  text-align: center;
+}
+
+.read-stats-card .stat-value {
+  font-size: 24px;
+  font-weight: 700;
+  color: #667eea;
+}
+
+.read-stats-card .stat-label {
+  font-size: 12px;
+  color: #888;
+  margin-top: 4px;
+}

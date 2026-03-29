@@ -1,0 +1,104 @@
+.ann-card {
+  background: #fff;
+  border: 1px solid #f0f0f0;
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  transition: box-shadow 0.2s;
+}
+
+.ann-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+.ann-card.unread { border-left: 3px solid #1890ff; background: #f0f7ff; }
+.ann-card.urgent { border-left: 3px solid #ff4d4f; background: #fff2f0; }
+.ann-card.pinned { border-left: 3px solid #fa8c16; }
+
+.ann-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.ann-meta { display: flex; gap: 4px; flex-wrap: wrap; }
+
+.pin-badge, .urgent-badge, .required-badge, .type-badge {
+  font-size: 11px;
+  padding: 1px 6px;
+  border-radius: 3px;
+  color: #fff;
+}
+
+.pin-badge { background: #fa8c16; }
+.urgent-badge { background: #ff4d4f; }
+.required-badge { background: #722ed1; }
+.type-badge { background: #1890ff; }
+
+.ann-date { font-size: 12px; color: #999; }
+
+.ann-title {
+  font-size: 15px;
+  font-weight: 600;
+  margin-bottom: 4px;
+  color: #262626;
+}
+
+.ann-content {
+  font-size: 13px;
+  color: #595959;
+  line-height: 1.5;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+}
+
+.ann-card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 8px;
+}
+
+.ann-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 11px;
+  color: #8c8c8c;
+}
+
+.read-bar {
+  width: 80px;
+  height: 3px;
+  background: #f0f0f0;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.read-fill {
+  height: 100%;
+  background: #52c41a;
+  border-radius: 2px;
+  transition: width 0.3s;
+}
+
+.ann-actions { display: flex; gap: 8px; align-items: center; }
+
+.btn-confirm {
+  background: #722ed1;
+  color: #fff;
+  border: none;
+  padding: 2px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.confirmed-tag { font-size: 11px; color: #52c41a; }
+.unread-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #1890ff;
+}

@@ -1,0 +1,502 @@
+# ingress.yaml - 即时通讯系统入口配置
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: im-backend-ingress
+  namespace: im-system
+  labels:
+    app: im-backend
+    component: ingress
+    version: "1.0.0"
+    managed-by: kubernetes-ingress
+  annotations:
+    # Ingress 控制器注解
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/proxy-body-size: "100m"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "60"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "60"
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "30"
+    nginx.ingress.kubernetes.io/proxy-buffer-size: "128k"
+    nginx.ingress.kubernetes.io/proxy-buffers-number: "4"
+    
+    # WebSocket 支持
+    nginx.ingress.kubernetes.io/proxy-http-version: "1.1"
+    nginx.ingress.kubernetes.io/upstream-hash-by: "$binary_remote_addr"
+    nginx.ingress.kubernetes.io/upstream-keepalive-requests: "100"
+    nginx.ingress.kubernetes.io/upstream-keepalive-timeout: "60"
+    
+    # SSL/TLS 配置
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+    
+    # 速率限制
+    nginx.ingress.kubernetes.io/limit-rps: "100"
+    nginx.ingress.kubernetes.io/limit-rpm: "3000"
+    nginx.ingress.kubernetes.io/limit-connections: "20"
+    nginx.ingress.kubernetes.io/limit-burst-multiplier: "2"
+    nginx.ingress.kubernetes.io/limit-rps-log-level: "warn"
+    
+    # CORS 配置
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+    nginx.ingress.kubernetes.io/cors-allow-origin: "https://im.example.com"
+    nginx.ingress.kubernetes.io/cors-allow-methods: "GET, POST, PUT, DELETE, OPTIONS"
+    nginx.ingress.kubernetes.io/cors-allow-headers: "DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization"
+    nginx.ingress.kubernetes.io/cors-allow-credentials: "true"
+    nginx.ingress.kubernetes.io/cors-max-age: "86400"
+    
+    # 安全头
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      add_header X-Frame-Options "SAMEORIGIN" always;
+      add_header X-Content-Type-Options "nosniff" always;
+      add_header X-XSS-Protection "1; mode=block" always;
+      add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+      add_header Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' wss: https:; frame-ancestors 'self';" always;
+      add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+      add_header Permissions-Policy "geolocation=(), microphone=(), camera=()" always;
+    
+    # 监控注解
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "10254"
+    prometheus.io/path: "/metrics"
+    
+    # 自定义注解
+    im.ingress.description: "即时通讯系统后端入口配置"
+    im.ingress.owner: "im-infra-team"
+    im.ingress.contact: "infra@im.example.com"
+    im.ingress.sla: "99.95%"
+    im.ingress.version: "v1.0.0"
+    
+    # 证书管理
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    cert-manager.io/acme-challenge-type: "http01"
+    
+    # 健康检查
+    nginx.ingress.kubernetes.io/health-check-path: "/actuator/health"
+    nginx.ingress.kubernetes.io/health-check-interval-seconds: "15"
+    nginx.ingress.kubernetes.io/health-check-timeout-seconds: "5"
+    nginx.ingress.kubernetes.io/health-check-unhealthy-threshold: "3"
+    nginx.ingress.kubernetes.io/health-check-healthy-threshold: "2"
+    
+    # 重写配置
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    
+    # 服务端点
+    nginx.ingress.kubernetes.io/service-upstream: "true"
+    nginx.ingress.kubernetes.io/load-balance: "round_robin"
+    
+    # 自定义错误页面
+    nginx.ingress.kubernetes.io/custom-http-errors: "404,500,502,503,504"
+    nginx.ingress.kubernetes.io/error-page-url: "https://im.example.com/error"
+    
+    # 访问日志
+    nginx.ingress.kubernetes.io/enable-access-log: "true"
+    nginx.ingress.kubernetes.io/access-log-path: "/var/log/nginx/im-backend-access.log"
+    nginx.ingress.kubernetes.io/error-log-path: "/var/log/nginx/im-backend-error.log"
+    nginx.ingress.kubernetes.io/log-format-escape-json: "true"
+spec:
+  ingressClassName: nginx
+  
+  # TLS 配置
+  tls:
+  - hosts:
+    - im.example.com
+    - api.im.example.com
+    - ws.im.example.com
+    secretName: im-tls-secret
+  
+  # 路由规则
+  rules:
+  # API 路由
+  - host: api.im.example.com
+    http:
+      paths:
+      # 健康检查端点
+      - path: /health(/|$)(.*)
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: im-backend
+            port:
+              number: 8080
+      
+      # 监控端点
+      - path: /actuator(/|$)(.*)
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: im-backend
+            port:
+              number: 8081
+      
+      # REST API v1
+      - path: /api/v1(/|$)(.*)
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: im-backend
+            port:
+              number: 8080
+      
+      # REST API v2
+      - path: /api/v2(/|$)(.*)
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: im-backend
+            port:
+              number: 8080
+      
+      # 通用 API 路由
+      - path: /api(/|$)(.*)
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: im-backend
+            port:
+              number: 8080
+      
+      # 认证端点
+      - path: /auth(/|$)(.*)
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: im-backend
+            port:
+              number: 8080
+      
+      # 用户端点
+      - path: /users(/|$)(.*)
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: im-backend
+            port:
+              number: 8080
+      
+      # 消息端点
+      - path: /messages(/|$)(.*)
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: im-backend
+            port:
+              number: 8080
+      
+      # 群组端点
+      - path: /groups(/|$)(.*)
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: im-backend
+            port:
+              number: 8080
+      
+      # 联系人端点
+      - path: /contacts(/|$)(.*)
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: im-backend
+            port:
+              number: 8080
+      
+      # 文件上传端点
+      - path: /files(/|$)(.*)
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: im-backend
+            port:
+              number: 8080
+      
+      # 推送端点
+      - path: /push(/|$)(.*)
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: im-backend
+            port:
+              number: 8080
+  
+  # WebSocket 路由
+  - host: ws.im.example.com
+    http:
+      paths:
+      - path: /ws(/|$)(.*)
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: im-backend
+            port:
+              number: 8080
+      - path: /websocket(/|$)(.*)
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: im-backend
+            port:
+              number: 8080
+      - path: /socket(/|$)(.*)
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: im-backend
+            port:
+              number: 8080
+  
+  # 主域名路由
+  - host: im.example.com
+    http:
+      paths:
+      # 根路径
+      - path: /()(.*)
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: im-backend
+            port:
+              number: 8080
+
+---
+# IngressClass - Ingress 类配置
+apiVersion: networking.k8s.io/v1
+kind: IngressClass
+metadata:
+  name: nginx-im
+  labels:
+    app: im-backend
+    component: ingress-class
+    version: "1.0.0"
+  annotations:
+    ingressclass.kubernetes.io/is-default-class: "false"
+spec:
+  controller: k8s.io/ingress-nginx
+
+---
+# ClusterIssuer - Let's Encrypt 证书颁发者
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-prod
+  labels:
+    app: im-backend
+    component: cert-manager
+    version: "1.0.0"
+spec:
+  acme:
+    server: https://acme-v02.api.letsencrypt.org/directory
+    email: ssl@im.example.com
+    privateKeySecretRef:
+      name: letsencrypt-prod-key
+    solvers:
+    - http01:
+        ingress:
+          class: nginx
+          podTemplate:
+            spec:
+              nodeSelector:
+                "kubernetes.io/os": linux
+
+---
+# Certificate - TLS 证书
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: im-tls-certificate
+  namespace: im-system
+  labels:
+    app: im-backend
+    component: certificate
+    version: "1.0.0"
+spec:
+  secretName: im-tls-secret
+  issuerRef:
+    name: letsencrypt-prod
+    kind: ClusterIssuer
+  commonName: im.example.com
+  dnsNames:
+  - im.example.com
+  - api.im.example.com
+  - ws.im.example.com
+  - *.im.example.com
+  duration: 2160h  # 90 天
+  renewBefore: 360h  # 15 天前续期
+  subject:
+    organizations:
+    - IM Backend Team
+  isCA: false
+  privateKey:
+    algorithm: RSA
+    encoding: PKCS1
+    size: 2048
+  usages:
+  - server auth
+  - client auth
+  - digital signature
+  - key encipherment
+
+---
+# 监控 ConfigMap
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: im-backend-ingress-monitoring
+  namespace: im-system
+  labels:
+    app: im-backend
+    component: ingress-monitoring
+    version: "1.0.0"
+data:
+  # Prometheus 告警规则
+  ingress-alerts.yaml: |
+    groups:
+    - name: im-backend-ingress-alerts
+      rules:
+      - alert: IngressHighErrorRate
+        expr: sum(rate(nginx_ingress_controller_requests{namespace="im-system",ingress="im-backend-ingress",status=~"5.."}[5m])) / sum(rate(nginx_ingress_controller_requests{namespace="im-system",ingress="im-backend-ingress"}[5m])) > 0.05
+        for: 5m
+        labels:
+          severity: critical
+          service: im-backend
+          component: ingress
+        annotations:
+          summary: "Ingress 错误率过高"
+          description: "IM 后端 Ingress 错误率 {{ $value | humanizePercentage }} 超过阈值 5%"
+          runbook: "https://im.example.com/runbooks/ingress-high-error-rate"
+      
+      - alert: IngressHighLatency
+        expr: histogram_quantile(0.95, sum(rate(nginx_ingress_controller_request_duration_seconds_bucket{namespace="im-system",ingress="im-backend-ingress"}[5m])) by (le)) > 0.5
+        for: 5m
+        labels:
+          severity: warning
+          service: im-backend
+          component: ingress
+        annotations:
+          summary: "Ingress 响应延迟过高"
+          description: "IM 后端 Ingress P95 延迟 {{ $value }}s 超过阈值 500ms"
+          runbook: "https://im.example.com/runbooks/ingress-high-latency"
+      
+      - alert: IngressHighConnections
+        expr: nginx_ingress_controller_nginx_process_connections{namespace="im-system",state="active"} > 10000
+        for: 5m
+        labels:
+          severity: warning
+          service: im-backend
+          component: ingress
+        annotations:
+          summary: "Ingress 活跃连接数过高"
+          description: "IM 后端 Ingress 活跃连接数 {{ $value }} 超过阈值 10000"
+          runbook: "https://im.example.com/runbooks/ingress-high-connections"
+  
+  # 性能优化指南
+  ingress-optimization-guide.md: |
+    # IM Backend Ingress 性能优化指南
+    
+    ## 关键配置
+    
+    ### 超时设置
+    - proxy-read-timeout: 60s
+    - proxy-send-timeout: 60s
+    - proxy-connect-timeout: 30s
+    
+    ### 缓冲区设置
+    - proxy-buffer-size: 128k
+    - proxy-buffers-number: 4
+    
+    ### 速率限制
+    - limit-rps: 100 (每秒请求数)
+    - limit-rpm: 3000 (每分钟请求数)
+    - limit-connections: 20 (每 IP 连接数)
+    
+    ## WebSocket 优化
+    
+    ```yaml
+    proxy-http-version: "1.1"
+    upstream-hash-by: "$binary_remote_addr"
+    upstream-keepalive-requests: "100"
+    upstream-keepalive-timeout: "60"
+    ```
+    
+    ## 安全加固
+    
+    - SSL 重定向强制开启
+    - CORS 严格配置
+    - 安全头全面添加
+    - CSP 策略限制
+    
+    ## 监控指标
+    
+    1. **请求成功率**: > 99%
+    2. **P95 延迟**: < 500ms
+    3. **P99 延迟**: < 1s
+    4. **错误率**: < 5%
+    5. **活跃连接数**: < 10000
+    
+    ## 故障排除
+    
+    ### 常见问题
+    
+    1. **502 Bad Gateway**: 后端服务不可用
+    2. **504 Gateway Timeout**: 后端响应超时
+    3. **429 Too Many Requests**: 触发速率限制
+    4. **SSL 证书错误**: 证书过期或配置错误
+    
+    ### 诊断命令
+    
+    ```bash
+    # 查看 Ingress 状态
+    kubectl describe ingress im-backend-ingress -n im-system
+    
+    # 查看 Ingress 控制器日志
+    kubectl logs -n ingress-nginx -l app.kubernetes.io/name=ingress-nginx
+    
+    # 测试 SSL 证书
+    openssl s_client -connect im.example.com:443 -servername im.example.com
+    
+    # 压测
+    ab -n 10000 -c 100 https://im.example.com/api/v1/health
+    ```
+    
+    ## 联系人
+    
+    - Infra 团队：infra@im.example.com
+    - 紧急响应：+1-555-IM-INFRA
+    - 文档版本：1.0.0
+
+---
+# 金丝雀发布 Ingress（可选）
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: im-backend-canary-ingress
+  namespace: im-system
+  labels:
+    app: im-backend
+    component: canary-ingress
+    version: "1.1.0-canary"
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/canary: "true"
+    nginx.ingress.kubernetes.io/canary-weight: "10"  # 10% 流量
+    nginx.ingress.kubernetes.io/canary-by-header: "X-Canary-User"
+    nginx.ingress.kubernetes.io/canary-by-header-value: "true"
+    nginx.ingress.kubernetes.io/canary-by-cookie: "canary_test"
+spec:
+  ingressClassName: nginx
+  tls:
+  - hosts:
+    - api.im.example.com
+    secretName: im-tls-secret
+  rules:
+  - host: api.im.example.com
+    http:
+      paths:
+      - path: /api/v1(/|$)(.*)
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: im-backend-canary
+            port:
+              number: 8080

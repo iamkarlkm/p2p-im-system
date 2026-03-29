@@ -1,0 +1,254 @@
+/* 阅后即焚样式 */
+
+.self-destruct-timer-selector {
+  background: #1e1e1e;
+  border-radius: 12px;
+  padding: 16px;
+  min-width: 280px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.timer-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #ff6b6b;
+  margin-bottom: 12px;
+  text-align: center;
+}
+
+.timer-options {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.timer-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 12px 8px;
+  background: #2d2d2d;
+  border: 2px solid transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.timer-option:hover {
+  background: #3d3d3d;
+  border-color: #ff6b6b;
+}
+
+.timer-option.selected {
+  background: #ff6b6b20;
+  border-color: #ff6b6b;
+}
+
+.timer-icon {
+  font-size: 20px;
+  margin-bottom: 4px;
+}
+
+.timer-label {
+  font-size: 12px;
+  color: #ccc;
+}
+
+.custom-timer {
+  margin-top: 12px;
+  gap: 8px;
+}
+
+.custom-timer input {
+  flex: 1;
+  padding: 8px 12px;
+  background: #2d2d2d;
+  border: 1px solid #444;
+  border-radius: 6px;
+  color: #fff;
+  font-size: 14px;
+}
+
+.custom-timer input:focus {
+  outline: none;
+  border-color: #ff6b6b;
+}
+
+.custom-confirm {
+  padding: 8px 16px;
+  background: #ff6b6b;
+  border: none;
+  border-radius: 6px;
+  color: #fff;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.custom-confirm:hover {
+  background: #ff5252;
+}
+
+/* 销毁状态覆盖层 */
+.destroyed-overlay,
+.countdown-overlay,
+.pending-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.85);
+  border-radius: 8px;
+  animation: fadeIn 0.3s ease;
+}
+
+.destroyed-icon {
+  font-size: 48px;
+  margin-bottom: 8px;
+  animation: explode 0.5s ease;
+}
+
+.destroyed-text {
+  color: #888;
+  font-size: 12px;
+}
+
+.countdown-icon {
+  font-size: 32px;
+  margin-bottom: 4px;
+  animation: pulse 1s infinite;
+}
+
+.countdown-text {
+  color: #ff6b6b;
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.countdown-bar {
+  width: 80%;
+  height: 4px;
+  background: #444;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.countdown-progress {
+  height: 100%;
+  background: linear-gradient(90deg, #ff6b6b, #ff8e53);
+  transition: width 1s linear;
+}
+
+.pending-icon {
+  font-size: 32px;
+  margin-bottom: 4px;
+}
+
+.pending-text {
+  color: #666;
+  font-size: 12px;
+}
+
+/* 销毁消息样式 */
+.message-item.destroyed .message-content {
+  filter: blur(8px);
+  opacity: 0.3;
+  user-select: none;
+}
+
+.message-item.destroyed::after {
+  content: '💥';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 32px;
+}
+
+/* 动画 */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes explode {
+  0% { transform: scale(0.5); opacity: 0; }
+  50% { transform: scale(1.5); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+
+/* 销毁按钮 */
+.self-destruct-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  background: #ff6b6b20;
+  border-radius: 12px;
+  font-size: 11px;
+  color: #ff6b6b;
+}
+
+.self-destruct-badge .icon {
+  font-size: 12px;
+}
+
+.destroy-button {
+  padding: 6px 12px;
+  background: #ff4757;
+  border: none;
+  border-radius: 6px;
+  color: white;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.destroy-button:hover {
+  background: #ff3344;
+}
+
+/* 销毁历史列表 */
+.destroy-history-list {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.destroy-history-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: #f5f5f5;
+  border-radius: 8px;
+  margin-bottom: 8px;
+}
+
+.destroy-history-item .icon {
+  font-size: 24px;
+}
+
+.destroy-history-item .details {
+  flex: 1;
+}
+
+.destroy-history-item .reason {
+  font-size: 14px;
+  color: #333;
+}
+
+.destroy-history-item .time {
+  font-size: 12px;
+  color: #888;
+}
