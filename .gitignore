@@ -17,3 +17,8 @@
 # 添加基本项目文档
 !README.md
 /im-backend/target
+"design_docs/" 
+"design_logs/" 
+"dev_logs/" 
+"dev_docs/" 
+"logs/" 
