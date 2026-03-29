@@ -1,122 +1,136 @@
 package com.im.backend.modules.delivery.controller;
 
 import com.im.backend.common.Result;
-import com.im.backend.modules.delivery.dto.*;
-import com.im.backend.modules.delivery.service.IDeliveryOrderService;
-import com.im.backend.modules.delivery.service.IRiderService;
-import lombok.RequiredArgsConstructor;
+import com.im.backend.modules.delivery.model.dto.*;
+import com.im.backend.modules.delivery.service.*;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
 
 /**
- * 配送控制器
+ * 配送管理控制器
  */
 @RestController
 @RequestMapping("/api/v1/delivery")
-@RequiredArgsConstructor
 public class DeliveryController {
     
-    private final IDeliveryOrderService orderService;
-    private final IRiderService riderService;
+    @Autowired
+    private DeliveryTaskService taskService;
     
-    @PostMapping("/order/create")
-    public Result<DeliveryOrderResponse> createOrder(@RequestBody CreateDeliveryOrderRequest request) {
-        return Result.success(orderService.createOrder(request));
+    @Autowired
+    private TrajectoryFenceService fenceService;
+    
+    @Autowired
+    private PathOptimizationService pathService;
+    
+    @Autowired
+    private RiderService riderService;
+    
+    // ========== 配送任务接口 ==========
+    
+    @PostMapping("/task/create")
+    public Result<TaskResponse> createTask(@RequestBody CreateTaskRequest request) {
+        return Result.success(taskService.createTask(request));
     }
     
-    @GetMapping("/order/{orderId}")
-    public Result<DeliveryOrderResponse> getOrder(@PathVariable Long orderId) {
-        return Result.success(orderService.getOrderById(orderId));
+    @GetMapping("/task/{taskId}")
+    public Result<TaskResponse> getTask(@PathVariable Long taskId) {
+        return Result.success(taskService.getTaskById(taskId));
     }
     
-    @GetMapping("/order/user/{userId}")
-    public Result<List<DeliveryOrderResponse>> getUserOrders(@PathVariable Long userId) {
-        return Result.success(orderService.getUserOrders(userId));
+    @PostMapping("/task/{taskId}/assign")
+    public Result<Void> assignRider(@PathVariable Long taskId, @RequestParam Long riderId) {
+        taskService.assignRider(taskId, riderId);
+        return Result.success();
     }
     
-    @GetMapping("/order/rider/{riderId}/active")
-    public Result<List<DeliveryOrderResponse>> getRiderActiveOrders(@PathVariable Long riderId) {
-        return Result.success(orderService.getRiderActiveOrders(riderId));
+    @PostMapping("/task/{taskId}/status")
+    public Result<Void> updateTaskStatus(@PathVariable Long taskId, @RequestParam Integer status) {
+        taskService.updateTaskStatus(taskId, status);
+        return Result.success();
     }
     
-    @PostMapping("/order/{orderId}/assign")
-    public Result<Boolean> assignOrder(@PathVariable Long orderId, @RequestParam Long riderId) {
-        return Result.success(orderService.assignOrder(orderId, riderId));
+    @GetMapping("/task/rider/{riderId}")
+    public Result<List<TaskResponse>> getRiderTasks(@PathVariable Long riderId, 
+                                                     @RequestParam(required = false) Integer status) {
+        return Result.success(taskService.getRiderTasks(riderId, status));
     }
     
-    @PostMapping("/order/{orderId}/accept")
-    public Result<Boolean> acceptOrder(@PathVariable Long orderId, @RequestParam Long riderId) {
-        return Result.success(orderService.riderAcceptOrder(orderId, riderId));
+    @GetMapping("/task/stats")
+    public Result<Object> getTaskStats(@RequestParam(required = false) Long merchantId,
+                                        @RequestParam Long startTime,
+                                        @RequestParam Long endTime) {
+        return Result.success(taskService.getTaskStats(merchantId, startTime, endTime));
     }
     
-    @PostMapping("/order/{orderId}/pickup/arrive")
-    public Result<Boolean> arrivePickup(@PathVariable Long orderId, @RequestParam Long riderId) {
-        return Result.success(orderService.markArrivedPickup(orderId, riderId));
+    // ========== 轨迹围栏接口 ==========
+    
+    @PostMapping("/trajectory/upload")
+    public Result<Void> uploadTrajectory(@RequestBody TrajectoryUploadRequest request) {
+        fenceService.uploadTrajectory(request);
+        return Result.success();
     }
     
-    @PostMapping("/order/{orderId}/pickup")
-    public Result<Boolean> markPickedUp(@PathVariable Long orderId, @RequestParam Long riderId) {
-        return Result.success(orderService.markPickedUp(orderId, riderId));
+    @PostMapping("/fence/check")
+    public Result<FenceCheckResult> checkFence(@RequestBody FenceCheckRequest request) {
+        return Result.success(fenceService.checkFence(request));
     }
     
-    @PostMapping("/order/{orderId}/deliver/arrive")
-    public Result<Boolean> arriveDelivery(@PathVariable Long orderId, @RequestParam Long riderId) {
-        return Result.success(orderService.markArrivedDelivery(orderId, riderId));
+    @GetMapping("/fence/alerts")
+    public Result<List<FenceAlertResponse>> getFenceAlerts(@RequestParam(required = false) Long riderId,
+                                                            @RequestParam(required = false) Integer status) {
+        return Result.success(fenceService.getFenceAlerts(riderId, status));
     }
     
-    @PostMapping("/order/{orderId}/deliver")
-    public Result<Boolean> markDelivered(@PathVariable Long orderId, @RequestParam Long riderId) {
-        return Result.success(orderService.markDelivered(orderId, riderId));
+    @PostMapping("/fence/alert/{alertId}/handle")
+    public Result<Void> handleFenceAlert(@PathVariable Long alertId, 
+                                          @RequestParam String result,
+                                          @RequestParam Long handlerId) {
+        fenceService.handleFenceAlert(alertId, result, handlerId);
+        return Result.success();
     }
     
-    @PostMapping("/order/{orderId}/complete")
-    public Result<Boolean> completeOrder(@PathVariable Long orderId) {
-        return Result.success(orderService.completeOrder(orderId));
+    // ========== 路径优化接口 ==========
+    
+    @PostMapping("/route/optimize")
+    public Result<RouteResponse> optimizeRoute(@RequestBody RouteOptimizeRequest request) {
+        return Result.success(pathService.optimizeRoute(request));
     }
     
-    @PostMapping("/order/{orderId}/cancel")
-    public Result<Boolean> cancelOrder(@PathVariable Long orderId, 
-                                       @RequestParam String reason,
-                                       @RequestParam Integer cancelType) {
-        return Result.success(orderService.cancelOrder(orderId, reason, cancelType));
+    @GetMapping("/route/{routeId}")
+    public Result<RouteResponse> getRoute(@PathVariable Long routeId) {
+        return Result.success(new RouteResponse());
     }
     
-    @GetMapping("/order/{orderId}/trajectory")
-    public Result<List<RiderLocationResponse>> getOrderTrajectory(@PathVariable Long orderId) {
-        return Result.success(orderService.getOrderTrajectory(orderId));
+    @PostMapping("/route/{routeId}/recalculate")
+    public Result<RouteResponse> recalculateRoute(@PathVariable Long routeId,
+                                                   @RequestBody List<Long> newTaskIds) {
+        return Result.success(pathService.recalculateRoute(routeId, newTaskIds));
     }
     
-    @PostMapping("/rider/location/upload")
-    public Result<Boolean> uploadLocation(@RequestBody RiderLocationUploadRequest request) {
-        return Result.success(riderService.uploadLocation(request));
+    @GetMapping("/route/heatmap")
+    public Result<Object> getDeliveryHeatmap(@RequestParam String city,
+                                              @RequestParam Long startTime,
+                                              @RequestParam Long endTime) {
+        return Result.success(pathService.getDeliveryHeatmap(city, startTime, endTime));
     }
+    
+    // ========== 骑手管理接口 ==========
     
     @GetMapping("/rider/{riderId}")
     public Result<RiderResponse> getRider(@PathVariable Long riderId) {
         return Result.success(riderService.getRiderById(riderId));
     }
     
-    @PostMapping("/rider/{riderId}/online")
-    public Result<Boolean> riderOnline(@PathVariable Long riderId) {
-        return Result.success(riderService.riderGoOnline(riderId));
+    @GetMapping("/rider/{riderId}/location")
+    public Result<Object> getRiderLocation(@PathVariable Long riderId) {
+        return Result.success(riderService.getRiderLocation(riderId));
     }
     
-    @PostMapping("/rider/{riderId}/offline")
-    public Result<Boolean> riderOffline(@PathVariable Long riderId) {
-        return Result.success(riderService.riderGoOffline(riderId));
-    }
-    
-    @GetMapping("/rider/nearby")
-    public Result<List<RiderLocationResponse>> getNearbyRiders(
-            @RequestParam Double lat,
-            @RequestParam Double lng,
-            @RequestParam(defaultValue = "5.0") Double radius) {
-        return Result.success(riderService.getNearbyAvailableRiders(lat, lng, radius));
-    }
-    
-    @GetMapping("/rider/{riderId}/stats/today")
-    public Result<RiderTodayStatsResponse> getRiderTodayStats(@PathVariable Long riderId) {
-        return Result.success(riderService.getRiderTodayStats(riderId));
+    @GetMapping("/rider/{riderId}/eta")
+    public Result<Integer> getRiderETA(@PathVariable Long riderId,
+                                        @RequestParam BigDecimal targetLat,
+                                        @RequestParam BigDecimal targetLng) {
+        return Result.success(riderService.calculateETA(riderId, targetLat, targetLng));
     }
 }
