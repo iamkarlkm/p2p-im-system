@@ -1,216 +1,63 @@
 package com.im.backend.service;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
+import com.im.backend.dto.FileInfoDTO;
+import com.im.backend.dto.FileUploadRequest;
+import com.im.backend.dto.FileUploadResponse;
+import org.springframework.core.io.Resource;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.web.multipart.MultipartFile;
 
-import javax.annotation.PostConstruct;
 import java.io.IOException;
-import java.nio.file.*;
-import java.util.List;
-import java.util.UUID;
 
-@Service
-public class FileStorageService {
-
-    private static final Logger logger = LoggerFactory.getLogger(FileStorageService.class);
-
-    @Value("${file.storage.path:./uploads}")
-    private String storagePath;
-
-    @Value("${file.storage.temp-path:./temp}")
-    private String tempPath;
-
-    @Value("${file.storage.base-url:http://localhost:8080/files}")
-    private String baseUrl;
-
-    private Path storageDir;
-    private Path tempDir;
-
-    @PostConstruct
-    public void init() throws IOException {
-        storageDir = Paths.get(storagePath).toAbsolutePath().normalize();
-        tempDir = Paths.get(tempPath).toAbsolutePath().normalize();
-
-        // 创建存储目录
-        if (!Files.exists(storageDir)) {
-            Files.createDirectories(storageDir);
-            logger.info("创建存储目录: {}", storageDir);
-        }
-
-        // 创建临时目录
-        if (!Files.exists(tempDir)) {
-            Files.createDirectories(tempDir);
-            logger.info("创建临时目录: {}", tempDir);
-        }
-    }
-
+/**
+ * 文件存储服务接口
+ * 功能#17: 文件上传下载
+ */
+public interface FileStorageService {
+    
     /**
-     * 存储文件分片
+     * 上传文件
      */
-    public Path storeChunk(String uploadId, int chunkIndex, byte[] data) throws IOException {
-        Path chunkDir = tempDir.resolve(uploadId);
-        if (!Files.exists(chunkDir)) {
-            Files.createDirectories(chunkDir);
-        }
-
-        Path chunkPath = chunkDir.resolve(String.valueOf(chunkIndex));
-        Files.write(chunkPath, data);
-
-        logger.debug("存储分片: uploadId={}, chunkIndex={}, size={}", uploadId, chunkIndex, data.length);
-        return chunkPath;
-    }
-
+    FileUploadResponse uploadFile(MultipartFile file, FileUploadRequest request, Long ownerId) throws IOException;
+    
     /**
-     * 合并文件分片
+     * 下载文件
      */
-    public Path mergeChunks(String storagePath, List<com.im.backend.model.FileChunk> chunks) throws IOException {
-        Path targetPath = storageDir.resolve(storagePath);
-        Path parentDir = targetPath.getParent();
-
-        // 创建目标目录
-        if (!Files.exists(parentDir)) {
-            Files.createDirectories(parentDir);
-        }
-
-        // 创建临时合并文件
-        Path tempFile = tempDir.resolve(UUID.randomUUID().toString() + ".tmp");
-
-        try {
-            // 按顺序合并分片
-            for (com.im.backend.model.FileChunk chunk : chunks) {
-                Path chunkPath = Paths.get(chunk.getStoragePath());
-                byte[] chunkData = Files.readAllBytes(chunkPath);
-                Files.write(tempFile, chunkData, StandardOpenOption.CREATE, StandardOpenOption.APPEND);
-            }
-
-            // 移动到最终位置
-            Files.move(tempFile, targetPath, StandardCopyOption.REPLACE_EXISTING);
-
-            logger.info("文件合并完成: {}", targetPath);
-            return targetPath;
-
-        } finally {
-            // 清理临时文件
-            if (Files.exists(tempFile)) {
-                Files.deleteIfExists(tempFile);
-            }
-        }
-    }
-
+    Resource downloadFile(String storedName) throws IOException;
+    
     /**
-     * 删除分片
+     * 获取文件信息
      */
-    public void deleteChunk(String chunkPath) throws IOException {
-        Files.deleteIfExists(Paths.get(chunkPath));
-    }
-
+    FileInfoDTO getFileInfo(Long fileId);
+    
     /**
      * 删除文件
      */
-    public void deleteFile(String storagePath) throws IOException {
-        Path filePath = storageDir.resolve(storagePath);
-        Files.deleteIfExists(filePath);
-        logger.info("删除文件: {}", filePath);
-    }
-
+    void deleteFile(Long fileId, Long operatorId);
+    
     /**
-     * 获取文件
+     * 获取用户文件列表
      */
-    public Path getFile(String storagePath) {
-        return storageDir.resolve(storagePath);
-    }
-
+    Page<FileInfoDTO> getUserFiles(Long ownerId, Pageable pageable);
+    
     /**
-     * 检查文件是否存在
+     * 搜索文件
      */
-    public boolean fileExists(String storagePath) {
-        return Files.exists(storageDir.resolve(storagePath));
-    }
-
+    Page<FileInfoDTO> searchFiles(String keyword, Long ownerId, Pageable pageable);
+    
     /**
-     * 获取文件访问URL
+     * 获取公开文件列表
      */
-    public String getFileUrl(String storagePath) {
-        return baseUrl + "/" + storagePath;
-    }
-
+    Page<FileInfoDTO> getPublicFiles(Pageable pageable);
+    
     /**
-     * 获取文件大小
+     * 增加下载计数
      */
-    public long getFileSize(String storagePath) throws IOException {
-        Path filePath = storageDir.resolve(storagePath);
-        return Files.size(filePath);
-    }
-
+    void incrementDownloadCount(Long fileId);
+    
     /**
-     * 复制文件
+     * 获取用户存储空间使用量(字节)
      */
-    public String copyFile(String sourceStoragePath, String targetFileName) throws IOException {
-        Path source = storageDir.resolve(sourceStoragePath);
-        String newStoragePath = generateStoragePath(targetFileName);
-        Path target = storageDir.resolve(newStoragePath);
-
-        Path parentDir = target.getParent();
-        if (!Files.exists(parentDir)) {
-            Files.createDirectories(parentDir);
-        }
-
-        Files.copy(source, target, StandardCopyOption.REPLACE_EXISTING);
-        logger.info("复制文件: {} -> {}", source, target);
-
-        return newStoragePath;
-    }
-
-    /**
-     * 移动文件
-     */
-    public String moveFile(String sourceStoragePath, String targetPath) throws IOException {
-        Path source = storageDir.resolve(sourceStoragePath);
-        String newStoragePath = targetPath + "/" + source.getFileName().toString();
-        Path target = storageDir.resolve(newStoragePath);
-
-        Path parentDir = target.getParent();
-        if (!Files.exists(parentDir)) {
-            Files.createDirectories(parentDir);
-        }
-
-        Files.move(source, target, StandardCopyOption.REPLACE_EXISTING);
-        logger.info("移动文件: {} -> {}", source, target);
-
-        return newStoragePath;
-    }
-
-    /**
-     * 清理临时目录
-     */
-    public void cleanupTemp() throws IOException {
-        if (Files.exists(tempDir)) {
-            Files.walk(tempDir)
-                    .sorted((a, b) -> -a.compareTo(b))
-                    .forEach(path -> {
-                        try {
-                            Files.deleteIfExists(path);
-                        } catch (IOException e) {
-                            logger.warn("删除临时文件失败: {}", path, e);
-                        }
-                    });
-        }
-    }
-
-    private String generateStoragePath(String fileName) {
-        String datePath = java.time.LocalDateTime.now()
-                .format(java.time.format.DateTimeFormatter.ofPattern("yyyy/MM/dd"));
-        String ext = fileName.contains(".") ? fileName.substring(fileName.lastIndexOf(".")) : "";
-        return datePath + "/" + UUID.randomUUID().toString() + ext;
-    }
-
-    public Path getStorageDir() {
-        return storageDir;
-    }
-
-    public Path getTempDir() {
-        return tempDir;
-    }
+    Long getUserStorageUsage(Long ownerId);
 }

@@ -1,21 +1,41 @@
 [package]
 name = "im-desktop"
-version = "1.0.0"
-description = "IM Desktop Client"
-authors = ["IM Team"]
-license = ""
-repository = ""
+version = "0.1.0"
 edition = "2021"
+authors = ["IM Team"]
+description = "IM即时通讯系统桌面端"
+license = "MIT"
+repository = "https://github.com/im-team/im-desktop"
+rust-version = "1.75"
 
-[build-dependencies]
-tauri-build = { version = "1.0", features = [] }
+[lib]
+name = "im_desktop_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[[bin]]
+name = "im-desktop"
+path = "src/main.rs"
 
 [dependencies]
-tauri = { version = "1.0", features = ["shell-open"] }
+tauri = { version = "2.0", features = [] }
+tauri-plugin-shell = "2.0"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-chrono = "0.4"
+tokio = { version = "1.35", features = ["full"] }
+reqwest = { version = "0.11", features = ["json"] }
+anyhow = "1.0"
+thiserror = "1.0"
+log = "0.4"
+env_logger = "0.11"
+dirs = "5.0"
 
 [features]
 default = ["custom-protocol"]
 custom-protocol = ["tauri/custom-protocol"]
+
+[profile.release]
+panic = "abort"
+codegen-units = 1
+lto = true
+opt-level = 3
+strip = true

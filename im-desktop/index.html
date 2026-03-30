@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IM Desktop - 即时通讯</title>
+    <link rel="stylesheet" href="/src/styles.css">
+</head>
+<body>
+    <div id="app">
+        <!-- 登录界面 -->
+        <div id="login-page" class="page active">
+            <div class="login-container">
+                <div class="login-logo">
+                    <h1>IM Desktop</h1>
+                    <p>即时通讯系统</p>
+                </div>
+                <form id="login-form" class="login-form">
+                    <div class="form-group">
+                        <label for="username">用户名</label>
+                        <input type="text" id="username" name="username" placeholder="请输入用户名" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="password">密码</label>
+                        <input type="password" id="password" name="password" placeholder="请输入密码" required>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary btn-block">登录</button>
+                    </div>
+                    <div class="form-links">
+                        <a href="#" id="link-register">注册账号</a>
+                        <a href="#" id="link-forgot">忘记密码?</a>
+                    </div>
+                </form>
+                <div id="login-error" class="error-message"></div>
+            </div>
+        </div>
+
+        <!-- 主界面 -->
+        <div id="main-page" class="page">
+            <div class="main-layout">
+                <!-- 侧边栏 -->
+                <aside class="sidebar">
+                    <div class="sidebar-header">
+                        <div class="user-avatar">
+                            <img src="/assets/default-avatar.png" alt="头像" id="current-user-avatar">
+                        </div>
+                        <div class="user-info">
+                            <span id="current-user-name">未登录</span>
+                            <span class="user-status online" id="current-user-status">在线</span>
+                        </div>
+                    </div>
+                    <nav class="sidebar-nav">
+                        <a href="#" class="nav-item active" data-tab="chats">
+                            <span class="nav-icon">💬</span>
+                            <span class="nav-text">消息</span>
+                            <span class="nav-badge" id="unread-count">0</span>
+                        </a>
+                        <a href="#" class="nav-item" data-tab="contacts">
+                            <span class="nav-icon">👥</span>
+                            <span class="nav-text">联系人</span>
+                        </a>
+                        <a href="#" class="nav-item" data-tab="settings">
+                            <span class="nav-icon">⚙️</span>
+                            <span class="nav-text">设置</span>
+                        </a>
+                    </nav>
+                </aside>
+
+                <!-- 会话列表 -->
+                <div class="conversation-list" id="conversation-list">
+                    <div class="list-header">
+                        <h2>消息列表</h2>
+                        <button class="btn btn-icon" id="btn-new-chat">✏️</button>
+                    </div>
+                    <div class="search-box">
+                        <input type="text" placeholder="搜索会话..." id="search-conversations">
+                    </div>
+                    <div class="list-content" id="conversations-container">
+                        <!-- 会话项将动态插入这里 -->
+                    </div>
+                </div>
+
+                <!-- 聊天区域 -->
+                <div class="chat-area" id="chat-area">
+                    <div class="chat-header" id="chat-header">
+                        <div class="chat-title">
+                            <span id="chat-title-text">选择一个会话开始聊天</span>
+                        </div>
+                        <div class="chat-actions">
+                            <button class="btn btn-icon" id="btn-more">⋮</button>
+                        </div>
+                    </div>
+                    <div class="chat-messages" id="chat-messages">
+                        <!-- 消息将动态插入这里 -->
+                    </div>
+                    <div class="chat-input-area">
+                        <div class="input-toolbar">
+                            <button class="btn btn-icon" title="表情">😊</button>
+                            <button class="btn btn-icon" title="图片">🖼️</button>
+                            <button class="btn btn-icon" title="文件">📎</button>
+                        </div>
+                        <div class="input-box">
+                            <textarea id="message-input" placeholder="输入消息..." rows="3"></textarea>
+                        </div>
+                        <div class="input-actions">
+                            <button class="btn btn-primary" id="btn-send">发送</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="/src/main.ts"></script>
+</body>
+</html>

@@ -1,85 +1,118 @@
 package com.im.backend.controller;
 
+import com.im.backend.dto.FileInfoDTO;
+import com.im.backend.dto.FileUploadRequest;
 import com.im.backend.dto.FileUploadResponse;
-import com.im.backend.entity.FileEntity;
-import com.im.backend.service.FileService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.im.backend.dto.response.ApiResponse;
+import com.im.backend.service.FileStorageService;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.io.IOException;
+import java.util.List;
 
 /**
- * 文件控制器 - CDN/MinIO 文件服务 REST API
- * 提供文件上传、下载、预览、媒体库等接口
+ * 文件管理控制器
+ * 功能#17: 文件上传下载
  */
 @RestController
-@RequestMapping("/api/v1/files")
+@RequestMapping("/api/file")
 public class FileController {
 
-    private static final Logger log = LoggerFactory.getLogger(FileController.class);
-
     @Autowired
-    private FileService fileService;
-
-    // ==================== 文件上传 ====================
+    private FileStorageService fileStorageService;
 
     /**
      * 上传文件
-     * POST /api/v1/files/upload
      */
     @PostMapping("/upload")
-    public ResponseEntity<FileUploadResponse> uploadFile(
+    public ResponseEntity<ApiResponse<FileUploadResponse>> uploadFile(
             @RequestParam("file") MultipartFile file,
-            @RequestHeader("X-User-Id") String userId,
-            @RequestParam(value = "conversationId", required = false) String conversationId) {
-
+            @RequestParam(value = "isPublic", defaultValue = "false") Boolean isPublic,
+            HttpServletRequest request) {
         try {
-            FileUploadResponse response = fileService.uploadFile(file, userId, conversationId);
-            return ResponseEntity.ok(response);
+            Long ownerId = getCurrentUserId(request);
+            
+            FileUploadRequest uploadRequest = new FileUploadRequest();
+            uploadRequest.setFileName(file.getOriginalFilename());
+            uploadRequest.setFileSize(file.getSize());
+            uploadRequest.setMimeType(file.getContentType());
+            uploadRequest.setIsPublic(isPublic);
+
+            FileUploadResponse response = fileStorageService.uploadFile(file, uploadRequest, ownerId);
+            return ResponseEntity.ok(ApiResponse.success(response));
         } catch (Exception e) {
-            log.error("文件上传失败: {}", e.getMessage(), e);
-            return ResponseEntity.internalServerError().build();
+            return ResponseEntity.badRequest().body(ApiResponse.error(400, e.getMessage()));
         }
     }
 
     /**
-     * 获取预签名上传URL (分片上传前获取地址)
-     * GET /api/v1/files/presigned-upload
+     * 批量上传文件
      */
-    @GetMapping("/presigned-upload")
-    public ResponseEntity<Map<String, String>> getPresignedUploadUrl(
-            @RequestParam("fileName") String fileName,
-            @RequestParam("contentType") String contentType) {
+    @PostMapping("/upload/batch")
+    public ResponseEntity<ApiResponse<List<FileUploadResponse>>> uploadFiles(
+            @RequestParam("files") List<MultipartFile> files,
+            @RequestParam(value = "isPublic", defaultValue = "false") Boolean isPublic,
+            HttpServletRequest request) {
         try {
-            String url = fileService.getPresignedUploadUrl(fileName, contentType);
-            Map<String, String> result = new HashMap<>();
-            result.put("uploadUrl", url);
-            return ResponseEntity.ok(result);
+            Long ownerId = getCurrentUserId(request);
+            List<FileUploadResponse> responses = files.stream()
+                .map(file -> {
+                    try {
+                        FileUploadRequest uploadRequest = new FileUploadRequest();
+                        uploadRequest.setFileName(file.getOriginalFilename());
+                        uploadRequest.setFileSize(file.getSize());
+                        uploadRequest.setMimeType(file.getContentType());
+                        uploadRequest.setIsPublic(isPublic);
+                        return fileStorageService.uploadFile(file, uploadRequest, ownerId);
+                    } catch (IOException e) {
+                        throw new RuntimeException("Upload failed: " + file.getOriginalFilename());
+                    }
+                })
+                .toList();
+            return ResponseEntity.ok(ApiResponse.success(responses));
         } catch (Exception e) {
-            log.error("生成预签名URL失败: {}", e.getMessage());
-            return ResponseEntity.internalServerError().build();
+            return ResponseEntity.badRequest().body(ApiResponse.error(400, e.getMessage()));
         }
     }
 
-    // ==================== 文件访问 ====================
+    /**
+     * 下载文件
+     */
+    @GetMapping("/download/{storedName}")
+    public ResponseEntity<Resource> downloadFile(@PathVariable String storedName) {
+        try {
+            Resource resource = fileStorageService.downloadFile(storedName);
+            String contentType = "application/octet-stream";
+            
+            return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(contentType))
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + storedName + "\"")
+                .body(resource);
+        } catch (Exception e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
 
     /**
-     * 获取文件下载URL
-     * GET /api/v1/files/{fileId}/download
+     * 预览文件（内联显示）
      */
-    @GetMapping("/{fileId}/download")
-    public ResponseEntity<Map<String, String>> getDownloadUrl(@PathVariable String fileId) {
+    @GetMapping("/preview/{storedName}")
+    public ResponseEntity<Resource> previewFile(@PathVariable String storedName) {
         try {
-            String downloadUrl = fileService.getDownloadUrl(fileId);
-            Map<String, String> result = new HashMap<>();
-            result.put("downloadUrl", downloadUrl);
-            return ResponseEntity.ok(result);
+            Resource resource = fileStorageService.downloadFile(storedName);
+            return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "inline")
+                .body(resource);
         } catch (Exception e) {
             return ResponseEntity.notFound().build();
         }
@@ -87,77 +120,107 @@ public class FileController {
 
     /**
      * 获取文件信息
-     * GET /api/v1/files/{fileId}
      */
-    @GetMapping("/{fileId}")
-    public ResponseEntity<FileEntity> getFileInfo(@PathVariable String fileId) {
+    @GetMapping("/info/{fileId}")
+    public ResponseEntity<ApiResponse<FileInfoDTO>> getFileInfo(@PathVariable Long fileId) {
         try {
-            FileEntity file = fileService.getFileInfo(fileId);
-            return ResponseEntity.ok(file);
+            FileInfoDTO fileInfo = fileStorageService.getFileInfo(fileId);
+            return ResponseEntity.ok(ApiResponse.success(fileInfo));
         } catch (Exception e) {
-            return ResponseEntity.notFound().build();
+            return ResponseEntity.badRequest().body(ApiResponse.error(404, e.getMessage()));
         }
     }
-
-    // ==================== 文件列表 ====================
-
-    /**
-     * 获取用户文件列表
-     * GET /api/v1/files/user/{userId}
-     */
-    @GetMapping("/user/{userId}")
-    public ResponseEntity<Page<FileEntity>> getUserFiles(
-            @PathVariable String userId,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size) {
-        Page<FileEntity> files = fileService.getUserFiles(userId, page, size);
-        return ResponseEntity.ok(files);
-    }
-
-    /**
-     * 获取会话媒体文件 (图片/视频/文件汇总)
-     * GET /api/v1/files/conversation/{conversationId}/media
-     */
-    @GetMapping("/conversation/{conversationId}/media")
-    public ResponseEntity<Page<FileEntity>> getConversationMedia(
-            @PathVariable String conversationId,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size) {
-        Page<FileEntity> media = fileService.getConversationMedia(conversationId, page, size);
-        return ResponseEntity.ok(media);
-    }
-
-    // ==================== 存储管理 ====================
-
-    /**
-     * 获取用户存储使用情况
-     * GET /api/v1/files/storage/{userId}
-     */
-    @GetMapping("/storage/{userId}")
-    public ResponseEntity<Map<String, Object>> getStorageInfo(@PathVariable String userId) {
-        Map<String, Object> info = fileService.getStorageInfo(userId);
-        return ResponseEntity.ok(info);
-    }
-
-    // ==================== 文件删除 ====================
 
     /**
      * 删除文件
-     * DELETE /api/v1/files/{fileId}
      */
     @DeleteMapping("/{fileId}")
-    public ResponseEntity<Map<String, String>> deleteFile(
-            @PathVariable String fileId,
-            @RequestHeader("X-User-Id") String userId) {
+    public ResponseEntity<ApiResponse<Void>> deleteFile(
+            @PathVariable Long fileId,
+            HttpServletRequest request) {
         try {
-            fileService.deleteFile(fileId, userId);
-            Map<String, String> result = new HashMap<>();
-            result.put("message", "文件删除成功");
-            return ResponseEntity.ok(result);
+            Long ownerId = getCurrentUserId(request);
+            fileStorageService.deleteFile(fileId, ownerId);
+            return ResponseEntity.ok(ApiResponse.success(null));
         } catch (Exception e) {
-            Map<String, String> error = new HashMap<>();
-            error.put("error", e.getMessage());
-            return ResponseEntity.badRequest().body(error);
+            return ResponseEntity.badRequest().body(ApiResponse.error(400, e.getMessage()));
         }
+    }
+
+    /**
+     * 获取当前用户文件列表
+     */
+    @GetMapping("/my-files")
+    public ResponseEntity<ApiResponse<Page<FileInfoDTO>>> getMyFiles(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            HttpServletRequest request) {
+        try {
+            Long ownerId = getCurrentUserId(request);
+            Pageable pageable = PageRequest.of(page, size);
+            Page<FileInfoDTO> files = fileStorageService.getUserFiles(ownerId, pageable);
+            return ResponseEntity.ok(ApiResponse.success(files));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(ApiResponse.error(400, e.getMessage()));
+        }
+    }
+
+    /**
+     * 搜索文件
+     */
+    @GetMapping("/search")
+    public ResponseEntity<ApiResponse<Page<FileInfoDTO>>> searchFiles(
+            @RequestParam String keyword,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            HttpServletRequest request) {
+        try {
+            Long ownerId = getCurrentUserId(request);
+            Pageable pageable = PageRequest.of(page, size);
+            Page<FileInfoDTO> files = fileStorageService.searchFiles(keyword, ownerId, pageable);
+            return ResponseEntity.ok(ApiResponse.success(files));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(ApiResponse.error(400, e.getMessage()));
+        }
+    }
+
+    /**
+     * 获取公开文件列表
+     */
+    @GetMapping("/public")
+    public ResponseEntity<ApiResponse<Page<FileInfoDTO>>> getPublicFiles(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        try {
+            Pageable pageable = PageRequest.of(page, size);
+            Page<FileInfoDTO> files = fileStorageService.getPublicFiles(pageable);
+            return ResponseEntity.ok(ApiResponse.success(files));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(ApiResponse.error(400, e.getMessage()));
+        }
+    }
+
+    /**
+     * 获取用户存储空间使用情况
+     */
+    @GetMapping("/storage/usage")
+    public ResponseEntity<ApiResponse<Long>> getStorageUsage(HttpServletRequest request) {
+        try {
+            Long ownerId = getCurrentUserId(request);
+            Long usage = fileStorageService.getUserStorageUsage(ownerId);
+            return ResponseEntity.ok(ApiResponse.success(usage));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(ApiResponse.error(400, e.getMessage()));
+        }
+    }
+
+    private Long getCurrentUserId(HttpServletRequest request) {
+        // Get from JWT token or session
+        Object userId = request.getAttribute("userId");
+        if (userId != null) {
+            return Long.valueOf(userId.toString());
+        }
+        // Default for testing
+        return 1L;
     }
 }
