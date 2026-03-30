@@ -1,8 +1,6 @@
 package com.im.backend.modules.merchant.review.entity;
 
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.annotation.*;
 import lombok.Data;
 import lombok.Builder;
 import lombok.NoArgsConstructor;
@@ -11,8 +9,7 @@ import lombok.AllArgsConstructor;
 import java.time.LocalDateTime;
 
 /**
- * 评价回复实体类
- * 支持商家回复、用户追评、互动回复
+ * 商户评价回复实体 - 功能#310: 本地商户评价口碑
  */
 @Data
 @Builder
@@ -24,39 +21,34 @@ public class MerchantReviewReply {
     @TableId(type = IdType.AUTO)
     private Long id;
 
-    /** 回复ID */
-    private String replyId;
-
     /** 评价ID */
-    private String reviewId;
+    private Long reviewId;
 
-    /** 父回复ID（支持二级回复） */
-    private String parentReplyId;
-
-    /** 回复者ID */
-    private Long replierId;
-
-    /** 回复者类型 1-商户 2-用户 */
-    private Integer replierType;
+    /** 回复用户ID */
+    private Long userId;
 
     /** 回复内容 */
     private String content;
 
-    /** 回复图片 */
-    private String images;
+    /** 回复类型: 1-商家回复, 2-用户追评, 3-其他用户回复 */
+    private Integer replyType;
+
+    /** 父回复ID (用于多级回复) */
+    private Long parentId;
 
     /** 点赞数 */
     private Integer likeCount;
 
-    /** 情感分析得分 */
-    private Double sentimentScore;
-
-    /** 状态 0-待审核 1-已通过 2-已拒绝 */
+    /** 状态: 0-待审核, 1-已通过 */
     private Integer status;
 
-    /** 创建时间 */
-    private LocalDateTime createdAt;
+    /** 是否删除 */
+    @TableLogic
+    private Boolean deleted;
 
-    /** 更新时间 */
-    private LocalDateTime updatedAt;
+    @TableField(fill = FieldFill.INSERT)
+    private LocalDateTime createTime;
+
+    @TableField(fill = FieldFill.INSERT_UPDATE)
+    private LocalDateTime updateTime;
 }

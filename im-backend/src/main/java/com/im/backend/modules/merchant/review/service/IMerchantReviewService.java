@@ -1,60 +1,67 @@
 package com.im.backend.modules.merchant.review.service;
 
-import com.im.backend.common.core.result.PageResult;
-import com.im.backend.modules.merchant.review.dto.*;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.im.backend.common.Result;
+import com.im.backend.modules.merchant.review.dto.ReviewSubmitRequest;
+import com.im.backend.modules.merchant.review.dto.ReviewResponse;
+import com.im.backend.modules.merchant.review.dto.ReviewStatsResponse;
+import com.im.backend.modules.merchant.review.entity.MerchantReview;
+
+import java.util.List;
 
 /**
- * 商户评价服务接口
+ * 商户评价服务接口 - 功能#310: 本地商户评价口碑
  */
 public interface IMerchantReviewService {
 
     /**
      * 提交评价
      */
-    String submitReview(Long userId, SubmitReviewRequest request);
+    Result<ReviewResponse> submitReview(Long userId, ReviewSubmitRequest request);
+
+    /**
+     * 分页查询商户评价
+     */
+    IPage<ReviewResponse> getMerchantReviews(Long merchantId, Integer rating, Boolean hasImage, Page<MerchantReview> page);
 
     /**
      * 获取评价详情
      */
-    ReviewDetailResponse getReviewDetail(String reviewId, Long currentUserId);
+    ReviewResponse getReviewDetail(Long reviewId, Long currentUserId);
 
     /**
-     * 获取商户评价列表
+     * 获取商户评分统计
      */
-    ReviewListResponse getMerchantReviews(Long merchantId, ReviewListRequest request);
+    ReviewStatsResponse getReviewStats(Long merchantId);
 
     /**
-     * 删除评价
+     * 商家回复评价
      */
-    void deleteReview(String reviewId, Long userId);
+    Result<Void> merchantReply(Long merchantId, Long reviewId, String reply);
 
     /**
-     * 点赞评价
+     * 点赞/取消点赞评价
      */
-    void likeReview(Long userId, LikeReviewRequest request);
+    Result<Boolean> toggleLike(Long userId, Long reviewId);
 
     /**
-     * 评价是否已点赞
+     * 获取用户的评价列表
      */
-    boolean hasLiked(String reviewId, Long userId);
+    IPage<ReviewResponse> getUserReviews(Long userId, Page<MerchantReview> page);
 
     /**
-     * 审核评价
+     * 获取推荐评价
      */
-    void auditReview(Long auditorId, AuditReviewRequest request);
+    List<ReviewResponse> getRecommendedReviews(Long merchantId, Integer limit);
 
     /**
-     * 举报评价
+     * 删除评价 (用户自己删除)
      */
-    void reportReview(Long reporterId, ReportReviewRequest request);
+    Result<Void> deleteReview(Long userId, Long reviewId);
 
     /**
-     * 获取待审核评价列表
+     * 审核评价 (管理员)
      */
-    PageResult<ReviewDetailResponse> getPendingReviews(Integer page, Integer size);
-
-    /**
-     * 获取用户发布的评价
-     */
-    ReviewListResponse getUserReviews(Long userId, Integer page, Integer size);
+    Result<Void> auditReview(Long reviewId, Integer status, String rejectReason);
 }

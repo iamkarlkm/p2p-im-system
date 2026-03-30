@@ -1,81 +1,143 @@
 package com.im.backend.dto;
 
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+
+import javax.validation.constraints.*;
+import java.util.List;
+import java.util.Map;
+
 /**
- * 搜索请求DTO
+ * 本地生活搜索请求DTO
  */
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class SearchRequest {
 
-    private String query;
-    private String index; // messages, users, groups
-    private String conversationId;
-    private Long userId; // filter by sender/receiver
-    private Long fromUserId;
-    private Long toUserId;
-    private String type; // TEXT, IMAGE, FILE, AUDIO, VIDEO
-    private String startTime; // ISO timestamp
-    private String endTime;
-    private Integer from; // pagination
-    private Integer size; // default 20, max 100
-    private String sortBy; // relevance, time, _score
-    private String sortOrder; // asc, desc
-    private Boolean fuzzy; // fuzzy matching
-    private String highlightPreTag;
-    private String highlightPostTag;
-    private String groupId; // for group message search
-    private Long sinceMessageId; // search since a specific message
+    /**
+     * 搜索关键词
+     */
+    @Size(max = 100, message = "关键词长度不能超过100字符")
+    private String keyword;
 
-    // Getters and Setters
-    public String getQuery() { return query; }
-    public void setQuery(String query) { this.query = query; }
+    /**
+     * 搜索类型: KEYWORD-关键词, POI-地点, MERCHANT-商户, COUPON-优惠券, ACTIVITY-活动
+     */
+    @Pattern(regexp = "KEYWORD|POI|MERCHANT|COUPON|ACTIVITY", message = "无效的搜索类型")
+    private String searchType;
 
-    public String getIndex() { return index; }
-    public void setIndex(String index) { this.index = index; }
+    /**
+     * 经度(-180 ~ 180)
+     */
+    @DecimalMin(value = "-180.0", message = "经度不能小于-180")
+    @DecimalMax(value = "180.0", message = "经度不能大于180")
+    private Double longitude;
 
-    public String getConversationId() { return conversationId; }
-    public void setConversationId(String conversationId) { this.conversationId = conversationId; }
+    /**
+     * 纬度(-90 ~ 90)
+     */
+    @DecimalMin(value = "-90.0", message = "纬度不能小于-90")
+    @DecimalMax(value = "90.0", message = "纬度不能大于90")
+    private Double latitude;
 
-    public Long getUserId() { return userId; }
-    public void setUserId(Long userId) { this.userId = userId; }
+    /**
+     * 搜索半径(米), 默认3000
+     */
+    @Min(value = 100, message = "搜索半径最小100米")
+    @Max(value = 50000, message = "搜索半径最大50000米")
+    @Builder.Default
+    private Integer radius = 3000;
 
-    public Long getFromUserId() { return fromUserId; }
-    public void setFromUserId(Long fromUserId) { this.fromUserId = fromUserId; }
+    /**
+     * 城市编码
+     */
+    @Size(max = 20, message = "城市编码长度不能超过20")
+    private String cityCode;
 
-    public Long getToUserId() { return toUserId; }
-    public void setToUserId(Long toUserId) { this.toUserId = toUserId; }
+    /**
+     * POI分类过滤: FOOD-美食, SHOPPING-购物, ENTERTAINMENT-娱乐, LIFE-生活服务
+     */
+    private List<String> poiTypes;
 
-    public String getType() { return type; }
-    public void setType(String type) { this.type = type; }
+    /**
+     * 价格区间过滤[min, max]
+     */
+    private List<Integer> priceRange;
 
-    public String getStartTime() { return startTime; }
-    public void setStartTime(String startTime) { this.startTime = startTime; }
+    /**
+     * 最低评分过滤(0-5)
+     */
+    @DecimalMin(value = "0.0")
+    @DecimalMax(value = "5.0")
+    private Double minRating;
 
-    public String getEndTime() { return endTime; }
-    public void setEndTime(String endTime) { this.endTime = endTime; }
+    /**
+     * 排序方式: DISTANCE-距离最近, RATING-评分最高, POPULAR-人气最高, SMART-智能排序
+     */
+    @Pattern(regexp = "DISTANCE|RATING|POPULAR|SMART", message = "无效的排序方式")
+    @Builder.Default
+    private String sortBy = "SMART";
 
-    public Integer getFrom() { return from; }
-    public void setFrom(Integer from) { this.from = from; }
+    /**
+     * 页码(从1开始)
+     */
+    @Min(value = 1, message = "页码从1开始")
+    @Builder.Default
+    private Integer pageNum = 1;
 
-    public Integer getSize() { return size; }
-    public void setSize(Integer size) { this.size = size; }
+    /**
+     * 每页数量
+     */
+    @Min(value = 1)
+    @Max(value = 50)
+    @Builder.Default
+    private Integer pageSize = 20;
 
-    public String getSortBy() { return sortBy; }
-    public void setSortBy(String sortBy) { this.sortBy = sortBy; }
+    /**
+     * 是否只查营业中的商户
+     */
+    @Builder.Default
+    private Boolean openNow = false;
 
-    public String getSortOrder() { return sortOrder; }
-    public void setSortOrder(String sortOrder) { this.sortOrder = sortOrder; }
+    /**
+     * 搜索来源
+     */
+    private String source;
 
-    public Boolean getFuzzy() { return fuzzy; }
-    public void setFuzzy(Boolean fuzzy) { this.fuzzy = fuzzy; }
+    /**
+     * 会话ID(用于追踪)
+     */
+    private String sessionId;
 
-    public String getHighlightPreTag() { return highlightPreTag; }
-    public void setHighlightPreTag(String highlightPreTag) { this.highlightPreTag = highlightPreTag; }
+    /**
+     * 获取搜索半径(带默认值)
+     */
+    public Integer getRadius() {
+        return radius == null ? 3000 : radius;
+    }
 
-    public String getHighlightPostTag() { return highlightPostTag; }
-    public void setHighlightPostTag(String highlightPostTag) { this.highlightPostTag = highlightPostTag; }
+    /**
+     * 获取偏移量
+     */
+    public Integer getOffset() {
+        return (getPageNum() - 1) * getPageSize();
+    }
 
-    public String getGroupId() { return groupId; }
-    public void setGroupId(String groupId) { this.groupId = groupId; }
+    /**
+     * 获取页码(带默认值)
+     */
+    public Integer getPageNum() {
+        return pageNum == null ? 1 : pageNum;
+    }
 
-    public Long getSinceMessageId() { return sinceMessageId; }
-    public void setSinceMessageId(Long sinceMessageId) { this.sinceMessageId = sinceMessageId; }
+    /**
+     * 获取每页数量(带默认值)
+     */
+    public Integer getPageSize() {
+        return pageSize == null ? 20 : pageSize;
+    }
 }

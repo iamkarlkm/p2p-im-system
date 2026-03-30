@@ -1,8 +1,6 @@
 package com.im.backend.modules.merchant.review.entity;
 
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.annotation.*;
 import lombok.Data;
 import lombok.Builder;
 import lombok.NoArgsConstructor;
@@ -12,8 +10,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 /**
- * 商户评价实体类
- * 支持多维度评分、图文评价、短视频评价
+ * 商户评价实体 - 功能#310: 本地商户评价口碑
  */
 @Data
 @Builder
@@ -25,53 +22,32 @@ public class MerchantReview {
     @TableId(type = IdType.AUTO)
     private Long id;
 
-    /** 评价ID */
-    private String reviewId;
-
     /** 商户ID */
     private Long merchantId;
 
-    /** 用户评价ID */
+    /** 用户ID */
     private Long userId;
 
-    /** 订单ID（可选） */
+    /** 订单ID */
     private Long orderId;
 
-    /** 综合星级评分 1-5 */
-    private Integer overallRating;
-
-    /** 口味评分 1-5 */
-    private Integer tasteRating;
-
-    /** 环境评分 1-5 */
-    private Integer environmentRating;
-
-    /** 服务评分 1-5 */
-    private Integer serviceRating;
-
-    /** 性价比评分 1-5 */
-    private Integer valueRating;
+    /** 评分 (1-5星) */
+    private Integer rating;
 
     /** 评价内容 */
     private String content;
 
-    /** 评价图片URL列表（JSON数组） */
+    /** 评价标签 (逗号分隔) */
+    private String tags;
+
+    /** 评价图片URL列表 (JSON数组) */
     private String images;
 
     /** 评价视频URL */
     private String videoUrl;
 
-    /** 是否匿名评价 */
+    /** 是否匿名 */
     private Boolean anonymous;
-
-    /** 消费金额（用于验证真实消费） */
-    private Integer consumeAmount;
-
-    /** 用餐人数 */
-    private Integer dinerCount;
-
-    /** 人均消费 */
-    private Integer perCapitaAmount;
 
     /** 点赞数 */
     private Integer likeCount;
@@ -82,36 +58,34 @@ public class MerchantReview {
     /** 浏览数 */
     private Integer viewCount;
 
-    /** 情感分析得分 -1~1 */
-    private Double sentimentScore;
+    /** 商家回复内容 */
+    private String merchantReply;
 
-    /** AI质量评分 0-100 */
-    private Integer qualityScore;
+    /** 商家回复时间 */
+    private LocalDateTime merchantReplyTime;
 
-    /** 是否为虚假评价 */
-    private Boolean fakeReview;
+    /** 是否推荐 (优质评价) */
+    private Boolean recommended;
 
-    /** 虚假评价原因 */
-    private String fakeReason;
-
-    /** 评价状态 0-待审核 1-已通过 2-已拒绝 */
+    /** 评价状态: 0-待审核, 1-已通过, 2-已拒绝 */
     private Integer status;
 
-    /** 置顶排序权重 */
-    private Integer pinWeight;
+    /** 拒绝原因 */
+    private String rejectReason;
 
-    /** 是否精华评价 */
-    private Boolean eliteReview;
+    /** 消费金额 */
+    private java.math.BigDecimal consumeAmount;
 
-    /** 创建时间 */
-    private LocalDateTime createdAt;
+    /** 消费项目 */
+    private String consumeItems;
 
-    /** 更新时间 */
-    private LocalDateTime updatedAt;
+    /** 是否删除 */
+    @TableLogic
+    private Boolean deleted;
 
-    /** 审核时间 */
-    private LocalDateTime auditedAt;
+    @TableField(fill = FieldFill.INSERT)
+    private LocalDateTime createTime;
 
-    /** 审核人 */
-    private Long auditorId;
+    @TableField(fill = FieldFill.INSERT_UPDATE)
+    private LocalDateTime updateTime;
 }

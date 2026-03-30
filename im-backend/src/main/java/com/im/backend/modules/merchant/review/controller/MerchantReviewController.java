@@ -1,140 +1,115 @@
 package com.im.backend.modules.merchant.review.controller;
 
-import com.im.backend.common.core.result.CommonResult;
-import com.im.backend.common.core.result.PageResult;
-import com.im.backend.modules.merchant.review.dto.*;
-import com.im.backend.modules.merchant.review.service.IMerchantReviewReplyService;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.im.backend.common.Result;
+import com.im.backend.modules.merchant.review.dto.ReviewSubmitRequest;
+import com.im.backend.modules.merchant.review.dto.ReviewResponse;
+import com.im.backend.modules.merchant.review.dto.ReviewStatsResponse;
+import com.im.backend.modules.merchant.review.entity.MerchantReview;
 import com.im.backend.modules.merchant.review.service.IMerchantReviewService;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import javax.validation.Valid;
+import java.util.List;
 
 /**
- * 商户评价控制器
- * 提供评价提交、查询、点赞、回复等功能
+ * 商户评价控制器 - 功能#310: 本地商户评价口碑
  */
+@Tag(name = "商户评价", description = "本地商户评价口碑相关接口")
 @RestController
-@RequestMapping("/api/v1/merchant-reviews")
+@RequestMapping("/api/merchant/review")
 @RequiredArgsConstructor
-@Api(tags = "商户评价管理")
 public class MerchantReviewController {
 
     private final IMerchantReviewService reviewService;
-    private final IMerchantReviewReplyService replyService;
 
+    @Operation(summary = "提交评价")
     @PostMapping("/submit")
-    @ApiOperation("提交评价")
-    public CommonResult<String> submitReview(
+    public Result<ReviewResponse> submitReview(
             @RequestAttribute("userId") Long userId,
-            @Valid @RequestBody SubmitReviewRequest request) {
-        String reviewId = reviewService.submitReview(userId, request);
-        return CommonResult.success(reviewId);
+            @RequestBody @Validated ReviewSubmitRequest request) {
+        return reviewService.submitReview(userId, request);
     }
 
-    @GetMapping("/{reviewId}")
-    @ApiOperation("获取评价详情")
-    public CommonResult<ReviewDetailResponse> getReviewDetail(
-            @PathVariable String reviewId,
-            @RequestAttribute(value = "userId", required = false) Long userId) {
-        ReviewDetailResponse detail = reviewService.getReviewDetail(reviewId, userId);
-        return CommonResult.success(detail);
+    @Operation(summary = "获取商户评价列表")
+    @GetMapping("/list/{merchantId}")
+    public Result<IPage<ReviewResponse>> getMerchantReviews(
+            @Parameter(description = "商户ID") @PathVariable Long merchantId,
+            @Parameter(description = "评分筛选") @RequestParam(required = false) Integer rating,
+            @Parameter(description = "是否有图") @RequestParam(required = false) Boolean hasImage,
+            @RequestParam(defaultValue = "1") Integer page,
+            @RequestParam(defaultValue = "10") Integer size) {
+        return Result.success(reviewService.getMerchantReviews(merchantId, rating, hasImage, new Page<>(page, size)));
     }
 
-    @GetMapping("/merchant/{merchantId}")
-    @ApiOperation("获取商户评价列表")
-    public CommonResult<ReviewListResponse> getMerchantReviews(
-            @PathVariable Long merchantId,
-            ReviewListRequest request) {
-        request.setMerchantId(merchantId);
-        ReviewListResponse reviews = reviewService.getMerchantReviews(merchantId, request);
-        return CommonResult.success(reviews);
+    @Operation(summary = "获取评价详情")
+    @GetMapping("/detail/{reviewId}")
+    public Result<ReviewResponse> getReviewDetail(
+            @PathVariable Long reviewId,
+            @RequestAttribute(value = "userId", required = false) Long currentUserId) {
+        return Result.success(reviewService.getReviewDetail(reviewId, currentUserId));
     }
 
-    @DeleteMapping("/{reviewId}")
-    @ApiOperation("删除评价")
-    public CommonResult<Void> deleteReview(
+    @Operation(summary = "获取商户评分统计")
+    @GetMapping("/stats/{merchantId}")
+    public Result<ReviewStatsResponse> getReviewStats(
+            @Parameter(description = "商户ID") @PathVariable Long merchantId) {
+        return Result.success(reviewService.getReviewStats(merchantId));
+    }
+
+    @Operation(summary = "商家回复评价")
+    @PostMapping("/reply/{reviewId}")
+    public Result<Void> merchantReply(
+            @RequestAttribute("merchantId") Long merchantId,
+            @PathVariable Long reviewId,
+            @RequestParam String reply) {
+        return reviewService.merchantReply(merchantId, reviewId, reply);
+    }
+
+    @Operation(summary = "点赞/取消点赞评价")
+    @PostMapping("/like/{reviewId}")
+    public Result<Boolean> toggleLike(
             @RequestAttribute("userId") Long userId,
-            @PathVariable String reviewId) {
-        reviewService.deleteReview(reviewId, userId);
-        return CommonResult.success();
+            @PathVariable Long reviewId) {
+        return reviewService.toggleLike(userId, reviewId);
     }
 
-    @PostMapping("/like")
-    @ApiOperation("点赞/取消点赞评价")
-    public CommonResult<Void> likeReview(
-            @RequestAttribute("userId") Long userId,
-            @Valid @RequestBody LikeReviewRequest request) {
-        reviewService.likeReview(userId, request);
-        return CommonResult.success();
-    }
-
-    @GetMapping("/{reviewId}/has-liked")
-    @ApiOperation("检查是否已点赞")
-    public CommonResult<Boolean> hasLiked(
-            @RequestAttribute("userId") Long userId,
-            @PathVariable String reviewId) {
-        boolean hasLiked = reviewService.hasLiked(reviewId, userId);
-        return CommonResult.success(hasLiked);
-    }
-
-    @PostMapping("/reply")
-    @ApiOperation("回复评价")
-    public CommonResult<String> replyReview(
-            @RequestAttribute("userId") Long userId,
-            @RequestAttribute("userType") Integer userType,
-            @Valid @RequestBody ReplyReviewRequest request) {
-        String replyId = replyService.replyReview(userId, userType, request);
-        return CommonResult.success(replyId);
-    }
-
-    @GetMapping("/{reviewId}/replies")
-    @ApiOperation("获取评价回复列表")
-    public CommonResult<java.util.List<ReviewReplyDTO>> getReviewReplies(
-            @PathVariable String reviewId) {
-        java.util.List<ReviewReplyDTO> replies = replyService.getReviewReplies(reviewId);
-        return CommonResult.success(replies);
-    }
-
-    @PostMapping("/report")
-    @ApiOperation("举报评价")
-    public CommonResult<Void> reportReview(
-            @RequestAttribute("userId") Long userId,
-            @Valid @RequestBody ReportReviewRequest request) {
-        reviewService.reportReview(userId, request);
-        return CommonResult.success();
-    }
-
-    @GetMapping("/user/my-reviews")
-    @ApiOperation("获取我的评价列表")
-    public CommonResult<ReviewListResponse> getMyReviews(
+    @Operation(summary = "获取我的评价列表")
+    @GetMapping("/my-reviews")
+    public Result<IPage<ReviewResponse>> getMyReviews(
             @RequestAttribute("userId") Long userId,
             @RequestParam(defaultValue = "1") Integer page,
-            @RequestParam(defaultValue = "20") Integer size) {
-        ReviewListResponse reviews = reviewService.getUserReviews(userId, page, size);
-        return CommonResult.success(reviews);
+            @RequestParam(defaultValue = "10") Integer size) {
+        return Result.success(reviewService.getUserReviews(userId, new Page<>(page, size)));
     }
 
-    // ============= 管理员接口 =============
-
-    @PostMapping("/admin/audit")
-    @ApiOperation("【管理员】审核评价")
-    public CommonResult<Void> auditReview(
-            @RequestAttribute("userId") Long auditorId,
-            @Valid @RequestBody AuditReviewRequest request) {
-        reviewService.auditReview(auditorId, request);
-        return CommonResult.success();
+    @Operation(summary = "获取推荐评价")
+    @GetMapping("/recommended/{merchantId}")
+    public Result<List<ReviewResponse>> getRecommendedReviews(
+            @Parameter(description = "商户ID") @PathVariable Long merchantId,
+            @RequestParam(defaultValue = "5") Integer limit) {
+        return Result.success(reviewService.getRecommendedReviews(merchantId, limit));
     }
 
-    @GetMapping("/admin/pending")
-    @ApiOperation("【管理员】获取待审核评价列表")
-    public CommonResult<PageResult<ReviewDetailResponse>> getPendingReviews(
-            @RequestParam(defaultValue = "1") Integer page,
-            @RequestParam(defaultValue = "20") Integer size) {
-        PageResult<ReviewDetailResponse> reviews = reviewService.getPendingReviews(page, size);
-        return CommonResult.success(reviews);
+    @Operation(summary = "删除我的评价")
+    @DeleteMapping("/delete/{reviewId}")
+    public Result<Void> deleteReview(
+            @RequestAttribute("userId") Long userId,
+            @PathVariable Long reviewId) {
+        return reviewService.deleteReview(userId, reviewId);
+    }
+
+    @Operation(summary = "审核评价 (管理员)")
+    @PostMapping("/audit/{reviewId}")
+    public Result<Void> auditReview(
+            @PathVariable Long reviewId,
+            @RequestParam Integer status,
+            @RequestParam(required = false) String rejectReason) {
+        return reviewService.auditReview(reviewId, status, rejectReason);
     }
 }
