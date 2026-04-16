@@ -1,0 +1,7 @@
+com/im/service/local/LocalServiceApplication.class
+com/im/service/local/controller/LocalController.class
+com/im/service/local/repository/MerchantRepository.class
+com/im/service/local/service/LocalService.class
+com/im/service/local/repository/MerchantReviewRepository.class
+com/im/service/local/entity/Merchant.class
+com/im/service/local/entity/MerchantReview.class

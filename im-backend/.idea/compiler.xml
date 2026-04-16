@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CompilerConfiguration">
+    <annotationProcessing>
+      <profile default="true" name="Default" enabled="true" />
+      <profile name="Maven default annotation processors profile" enabled="true">
+        <sourceOutputDir name="target/generated-sources/annotations" />
+        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
+        <outputRelativeToContentRoot value="true" />
+        <module name="im-infra-db" />
+        <module name="im-service-user" />
+        <module name="im-service-websocket" />
+        <module name="im-starter-redis" />
+        <module name="im-common-entity" />
+        <module name="im-service-message" />
+        <module name="im-infra-security" />
+        <module name="im-starter-kafka" />
+        <module name="im-starter-web" />
+        <module name="im-service-push" />
+        <module name="im-api-group" />
+        <module name="im-infra-cache" />
+        <module name="im-infra-search" />
+        <module name="im-common-dto" />
+        <module name="im-service-local" />
+        <module name="im-api-user" />
+        <module name="im-service-admin" />
+        <module name="im-service-storage" />
+        <module name="im-service-auth" />
+        <module name="im-service-bi" />
+        <module name="im-infra-mq" />
+        <module name="im-common-base" />
+        <module name="im-api-push" />
+        <module name="im-starter-mybatis" />
+        <module name="im-service-group" />
+        <module name="im-api-message" />
+      </profile>
+    </annotationProcessing>
+  </component>
+</project>

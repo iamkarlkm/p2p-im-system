@@ -24,3 +24,6 @@
 "logs/" 
 "memory/" 
 "workflows/" 
+/im-backend/im-common/im-common-base/target/
+/im-backend/im-common/im-common-dto/target/
+/im-backend/im-common/im-common-entity/target/

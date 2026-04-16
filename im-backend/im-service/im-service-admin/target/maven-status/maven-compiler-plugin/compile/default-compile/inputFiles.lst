@@ -1,0 +1,15 @@
+/mnt/c/Users/Administrator/.openclaw/workspace-clawd3/multi_agent/projects/im-modular/im-service/im-service-admin/src/main/java/com/im/service/admin/service/AdminService.java
+/mnt/c/Users/Administrator/.openclaw/workspace-clawd3/multi_agent/projects/im-modular/im-service/im-service-admin/src/main/java/com/im/service/admin/AdminServiceApplication.java
+/mnt/c/Users/Administrator/.openclaw/workspace-clawd3/multi_agent/projects/im-modular/im-service/im-service-admin/src/main/java/com/im/service/admin/dto/SystemStatisticsResponse.java
+/mnt/c/Users/Administrator/.openclaw/workspace-clawd3/multi_agent/projects/im-modular/im-service/im-service-admin/src/main/java/com/im/service/admin/dto/GroupAuditRequest.java
+/mnt/c/Users/Administrator/.openclaw/workspace-clawd3/multi_agent/projects/im-modular/im-service/im-service-admin/src/main/java/com/im/service/admin/service/impl/AdminServiceImpl.java
+/mnt/c/Users/Administrator/.openclaw/workspace-clawd3/multi_agent/projects/im-modular/im-service/im-service-admin/src/main/java/com/im/service/admin/package-info.java
+/mnt/c/Users/Administrator/.openclaw/workspace-clawd3/multi_agent/projects/im-modular/im-service/im-service-admin/src/main/java/com/im/service/admin/dto/StatisticsResponse.java
+/mnt/c/Users/Administrator/.openclaw/workspace-clawd3/multi_agent/projects/im-modular/im-service/im-service-admin/src/main/java/com/im/service/admin/controller/AdminController.java
+/mnt/c/Users/Administrator/.openclaw/workspace-clawd3/multi_agent/projects/im-modular/im-service/im-service-admin/src/main/java/com/im/service/admin/dto/AdminStatisticsResponse.java
+/mnt/c/Users/Administrator/.openclaw/workspace-clawd3/multi_agent/projects/im-modular/im-service/im-service-admin/src/main/java/com/im/service/admin/repository/AdminLogRepository.java
+/mnt/c/Users/Administrator/.openclaw/workspace-clawd3/multi_agent/projects/im-modular/im-service/im-service-admin/src/main/java/com/im/service/admin/entity/AdminLog.java
+/mnt/c/Users/Administrator/.openclaw/workspace-clawd3/multi_agent/projects/im-modular/im-service/im-service-admin/src/main/java/com/im/service/admin/dto/LogQueryRequest.java
+/mnt/c/Users/Administrator/.openclaw/workspace-clawd3/multi_agent/projects/im-modular/im-service/im-service-admin/src/main/java/com/im/service/admin/dto/SystemConfigRequest.java
+/mnt/c/Users/Administrator/.openclaw/workspace-clawd3/multi_agent/projects/im-modular/im-service/im-service-admin/src/main/java/com/im/service/admin/dto/CreateLogRequest.java
+/mnt/c/Users/Administrator/.openclaw/workspace-clawd3/multi_agent/projects/im-modular/im-service/im-service-admin/src/main/java/com/im/service/admin/dto/UserBanRequest.java

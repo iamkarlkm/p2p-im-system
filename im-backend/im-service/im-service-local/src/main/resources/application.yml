@@ -1,0 +1,26 @@
+spring:
+  application:
+    name: im-service-local
+  
+  datasource:
+    url: jdbc:mysql://localhost:3306/im_local?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai
+    username: root
+    password: password
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+
+server:
+  port: 8085
+
+# 本地生活服务配置
+local:
+  nearby:
+    default-radius-km: 5
+    max-radius-km: 50

@@ -1,0 +1,41 @@
+spring:
+  application:
+    name: im-service-push
+  
+  datasource:
+    url: jdbc:mysql://localhost:3306/im_push?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai
+    username: root
+    password: password
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+  
+  redis:
+    host: localhost
+    port: 6379
+    database: 0
+
+server:
+  port: 8084
+
+# 推送服务配置
+push:
+  apns:
+    enabled: false
+    bundle-id: com.im.app
+    sandbox: true
+  fcm:
+    enabled: false
+    project-id: im-project
+  hms:
+    enabled: false
+    app-id: 123456
+  retry:
+    max-attempts: 5
+    initial-interval: 5000

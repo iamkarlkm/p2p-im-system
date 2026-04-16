@@ -34,7 +34,7 @@ export interface Geofence {
 export class LocationService {
     private static instance: LocationService;
     private readonly baseUrl = '/api/v1/location';
-    private readonly geofenceUrl = '/api/v1/geofence';
+    private readonly geofenceUrl = '/api/v1/geofencing/geofences';
     
     private constructor() {}
     
@@ -115,6 +115,16 @@ export class LocationService {
         }
     }
     
+    public async getGeofenceById(id: string): Promise<Geofence> {
+        try {
+            const response = await apiClient.get(`${this.geofenceUrl}/${id}`);
+            return response.data.data;
+        } catch (error) {
+            console.error('Failed to get geofence:', error);
+            throw new Error(`Failed to get geofence: ${error.message}`);
+        }
+    }
+    
     public async updateGeofence(id: string, updates: Partial<Geofence>): Promise<Geofence> {
         try {
             const response = await apiClient.put(`${this.geofenceUrl}/${id}`, updates);
@@ -154,21 +164,21 @@ export class LocationService {
         }
     }
     
-    public async deactivateGeofence(id: string): Promise<void> {
+    public async enableGeofence(id: string): Promise<void> {
         try {
-            await apiClient.post(`${this.geofenceUrl}/${id}/deactivate`);
+            await apiClient.post(`${this.geofenceUrl}/${id}/enable`);
         } catch (error) {
-            console.error('Failed to deactivate geofence:', error);
-            throw new Error(`Failed to deactivate geofence: ${error.message}`);
+            console.error('Failed to enable geofence:', error);
+            throw new Error(`Failed to enable geofence: ${error.message}`);
         }
     }
     
-    public async activateGeofence(id: string): Promise<void> {
+    public async disableGeofence(id: string): Promise<void> {
         try {
-            await apiClient.post(`${this.geofenceUrl}/${id}/activate`);
+            await apiClient.post(`${this.geofenceUrl}/${id}/disable`);
         } catch (error) {
-            console.error('Failed to activate geofence:', error);
-            throw new Error(`Failed to activate geofence: ${error.message}`);
+            console.error('Failed to disable geofence:', error);
+            throw new Error(`Failed to disable geofence: ${error.message}`);
         }
     }
     

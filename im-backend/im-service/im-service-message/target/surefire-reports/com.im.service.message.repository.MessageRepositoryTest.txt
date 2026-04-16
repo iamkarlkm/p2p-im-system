@@ -1,0 +1,4 @@
+-------------------------------------------------------------------------------
+Test set: com.im.service.message.repository.MessageRepositoryTest
+-------------------------------------------------------------------------------
+Tests run: 15, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 4.331 s -- in com.im.service.message.repository.MessageRepositoryTest

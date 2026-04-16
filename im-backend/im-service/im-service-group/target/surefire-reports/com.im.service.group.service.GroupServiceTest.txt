@@ -1,0 +1,4 @@
+-------------------------------------------------------------------------------
+Test set: com.im.service.group.service.GroupServiceTest
+-------------------------------------------------------------------------------
+Tests run: 15, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 7.628 s -- in com.im.service.group.service.GroupServiceTest

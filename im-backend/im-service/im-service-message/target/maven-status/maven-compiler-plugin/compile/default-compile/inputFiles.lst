@@ -1,0 +1,13 @@
+/mnt/c/Users/Administrator/.openclaw/workspace-clawd3/multi_agent/projects/im-modular/im-service/im-service-message/src/main/java/com/im/service/message/dto/MessageResponse.java
+/mnt/c/Users/Administrator/.openclaw/workspace-clawd3/multi_agent/projects/im-modular/im-service/im-service-message/src/main/java/com/im/service/message/service/ConversationService.java
+/mnt/c/Users/Administrator/.openclaw/workspace-clawd3/multi_agent/projects/im-modular/im-service/im-service-message/src/main/java/com/im/service/message/MessageServiceApplication.java
+/mnt/c/Users/Administrator/.openclaw/workspace-clawd3/multi_agent/projects/im-modular/im-service/im-service-message/src/main/java/com/im/service/message/package-info.java
+/mnt/c/Users/Administrator/.openclaw/workspace-clawd3/multi_agent/projects/im-modular/im-service/im-service-message/src/main/java/com/im/service/message/controller/MessageController.java
+/mnt/c/Users/Administrator/.openclaw/workspace-clawd3/multi_agent/projects/im-modular/im-service/im-service-message/src/main/java/com/im/service/message/dto/SendMessageRequest.java
+/mnt/c/Users/Administrator/.openclaw/workspace-clawd3/multi_agent/projects/im-modular/im-service/im-service-message/src/main/java/com/im/service/message/dto/ConversationResponse.java
+/mnt/c/Users/Administrator/.openclaw/workspace-clawd3/multi_agent/projects/im-modular/im-service/im-service-message/src/main/java/com/im/service/message/controller/ConversationController.java
+/mnt/c/Users/Administrator/.openclaw/workspace-clawd3/multi_agent/projects/im-modular/im-service/im-service-message/src/main/java/com/im/service/message/service/MessageService.java
+/mnt/c/Users/Administrator/.openclaw/workspace-clawd3/multi_agent/projects/im-modular/im-service/im-service-message/src/main/java/com/im/service/message/repository/ConversationRepository.java
+/mnt/c/Users/Administrator/.openclaw/workspace-clawd3/multi_agent/projects/im-modular/im-service/im-service-message/src/main/java/com/im/service/message/repository/MessageRepository.java
+/mnt/c/Users/Administrator/.openclaw/workspace-clawd3/multi_agent/projects/im-modular/im-service/im-service-message/src/main/java/com/im/service/message/entity/Conversation.java
+/mnt/c/Users/Administrator/.openclaw/workspace-clawd3/multi_agent/projects/im-modular/im-service/im-service-message/src/main/java/com/im/service/message/entity/Message.java

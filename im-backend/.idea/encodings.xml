@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="Encoding">
+    <file url="file://$PROJECT_DIR$/im-api/im-api-group/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/im-api/im-api-group/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/im-api/im-api-message/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/im-api/im-api-message/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/im-api/im-api-push/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/im-api/im-api-push/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/im-api/im-api-user/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/im-api/im-api-user/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/im-common/im-common-base/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/im-common/im-common-base/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/im-common/im-common-dto/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/im-common/im-common-dto/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/im-common/im-common-entity/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/im-common/im-common-entity/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/im-infrastructure/im-infra-cache/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/im-infrastructure/im-infra-cache/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/im-infrastructure/im-infra-db/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/im-infrastructure/im-infra-db/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/im-infrastructure/im-infra-mq/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/im-infrastructure/im-infra-mq/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/im-infrastructure/im-infra-search/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/im-infrastructure/im-infra-search/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/im-infrastructure/im-infra-security/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/im-infrastructure/im-infra-security/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/im-service-bi/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/im-service-bi/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/im-service/im-service-admin/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/im-service/im-service-admin/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/im-service/im-service-auth/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/im-service/im-service-auth/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/im-service/im-service-group/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/im-service/im-service-group/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/im-service/im-service-local/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/im-service/im-service-local/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/im-service/im-service-message/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/im-service/im-service-message/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/im-service/im-service-push/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/im-service/im-service-push/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/im-service/im-service-storage/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/im-service/im-service-storage/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/im-service/im-service-user/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/im-service/im-service-user/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/im-service/im-service-websocket/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/im-service/im-service-websocket/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/im-starters/im-starter-kafka/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/im-starters/im-starter-kafka/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/im-starters/im-starter-mybatis/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/im-starters/im-starter-mybatis/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/im-starters/im-starter-redis/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/im-starters/im-starter-redis/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/im-starters/im-starter-web/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/im-starters/im-starter-web/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/src/main/resources" charset="UTF-8" />
+  </component>
+</project>

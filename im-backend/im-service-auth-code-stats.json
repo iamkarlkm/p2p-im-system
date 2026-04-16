@@ -1,0 +1,156 @@
+{
+  "module": "im-service-auth",
+  "date": "2026-04-07",
+  "files": [
+    {
+      "file": "JwtTokenProvider.java",
+      "total": 417,
+      "code": 184,
+      "comment": 185,
+      "blank": 48
+    },
+    {
+      "file": "JwtAuthenticationFilter.java",
+      "total": 267,
+      "code": 158,
+      "comment": 79,
+      "blank": 30
+    },
+    {
+      "file": "CustomUserDetailsService.java",
+      "total": 208,
+      "code": 116,
+      "comment": 59,
+      "blank": 33
+    },
+    {
+      "file": "TokenBlacklistService.java",
+      "total": 381,
+      "code": 199,
+      "comment": 123,
+      "blank": 59
+    },
+    {
+      "file": "SecurityConfig.java",
+      "total": 242,
+      "code": 131,
+      "comment": 74,
+      "blank": 37
+    },
+    {
+      "file": "AuthService.java",
+      "total": 463,
+      "code": 244,
+      "comment": 144,
+      "blank": 75
+    },
+    {
+      "file": "AuthController.java",
+      "total": 229,
+      "code": 117,
+      "comment": 79,
+      "blank": 33
+    },
+    {
+      "file": "RefreshToken.java",
+      "total": 168,
+      "code": 57,
+      "comment": 88,
+      "blank": 23
+    },
+    {
+      "file": "RefreshTokenRepository.java",
+      "total": 242,
+      "code": 66,
+      "comment": 145,
+      "blank": 31
+    },
+    {
+      "file": "LoginRequest.java",
+      "total": 43,
+      "code": 21,
+      "comment": 15,
+      "blank": 7
+    },
+    {
+      "file": "LoginResponse.java",
+      "total": 51,
+      "code": 18,
+      "comment": 24,
+      "blank": 9
+    },
+    {
+      "file": "RegisterRequest.java",
+      "total": 63,
+      "code": 33,
+      "comment": 21,
+      "blank": 9
+    },
+    {
+      "file": "RegisterResponse.java",
+      "total": 31,
+      "code": 14,
+      "comment": 12,
+      "blank": 5
+    },
+    {
+      "file": "TokenRefreshRequest.java",
+      "total": 29,
+      "code": 15,
+      "comment": 9,
+      "blank": 5
+    },
+    {
+      "file": "TokenRefreshResponse.java",
+      "total": 36,
+      "code": 15,
+      "comment": 15,
+      "blank": 6
+    },
+    {
+      "file": "ForgotPasswordRequest.java",
+      "total": 26,
+      "code": 16,
+      "comment": 6,
+      "blank": 4
+    },
+    {
+      "file": "ResetPasswordRequest.java",
+      "total": 41,
+      "code": 23,
+      "comment": 12,
+      "blank": 6
+    },
+    {
+      "file": "TokenVerifyRequest.java",
+      "total": 24,
+      "code": 14,
+      "comment": 6,
+      "blank": 4
+    },
+    {
+      "file": "TokenVerifyResponse.java",
+      "total": 43,
+      "code": 17,
+      "comment": 18,
+      "blank": 8
+    },
+    {
+      "file": "ApiResponse.java",
+      "total": 104,
+      "code": 47,
+      "comment": 47,
+      "blank": 10
+    }
+  ],
+  "summary": {
+    "total_files": 20,
+    "total_lines": 3108,
+    "code_lines": 1505,
+    "comment_lines": 1161,
+    "blank_lines": 442,
+    "code_percentage": 48.4,
+    "comment_percentage": 37.4,
+    "blank_percentage": 14.2
+  }
+}

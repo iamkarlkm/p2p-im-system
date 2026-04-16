@@ -1,0 +1,17 @@
+spring:
+  application:
+    name: im-service-auth
+  
+  redis:
+    host: localhost
+    port: 6379
+    database: 0
+
+server:
+  port: 8081
+
+# JWT配置
+jwt:
+  secret: your-256-bit-secret-key-for-jwt-signing
+  access-token-expire: 7200
+  refresh-token-expire: 604800

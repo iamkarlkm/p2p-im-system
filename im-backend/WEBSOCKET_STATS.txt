@@ -1,0 +1,18 @@
+# im-service-websocket 代码统计报告
+
+| 文件名 | 总行 | 代码 | 注释 | 空行 |
+|--------|------|------|------|------|
+| WebSocketConfig.java | 197 | 92 | 67 | 38 |
+| MessageWebSocketHandler.java | 614 | 414 | 108 | 92 |
+| OnlineStatusService.java | 480 | 255 | 150 | 75 |
+| WebSocketSessionManager.java | 519 | 265 | 179 | 75 |
+| WebSocketAuthInterceptor.java | 473 | 289 | 99 | 85 |
+| WebSocketMessage.java | 143 | 56 | 69 | 18 |
+| **总计** | **2426** | **1371** | **672** | **383** |
+
+## 统计摘要
+- **总文件数**: 6
+- **总行数**: 2426
+- **代码行数**: 1371 (56.5%)
+- **注释行数**: 672 (27.7%)
+- **空行数**: 383 (15.8%)

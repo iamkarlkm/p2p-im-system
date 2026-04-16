@@ -1,0 +1,10 @@
+com/im/service/group/controller/GroupController.class
+com/im/service/group/repository/GroupRepository.class
+com/im/service/group/dto/GroupResponse.class
+com/im/service/group/GroupServiceApplication.class
+com/im/service/group/service/GroupService.class
+com/im/service/group/repository/GroupMemberRepository.class
+com/im/service/group/entity/GroupMember.class
+com/im/service/group/dto/GroupMemberResponse.class
+com/im/service/group/dto/CreateGroupRequest.class
+com/im/service/group/entity/Group.class
