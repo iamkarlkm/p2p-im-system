@@ -5,6 +5,7 @@
 !/im-backend/
 !/im-desktop/
 !/im-mobile/
+!/im-service-storage/
 
 # 强制跟踪这些文件夹中的所有内容（不包括.gitignore文件）
 !im-backend/**/*

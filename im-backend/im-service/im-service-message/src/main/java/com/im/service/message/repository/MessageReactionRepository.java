@@ -45,6 +45,11 @@ public interface MessageReactionRepository extends JpaRepository<MessageReaction
     void deleteByMessageIdAndUserId(String messageId, String userId);
 
     /**
+     * 根据消息ID、用户ID和反应类型查询反应
+     */
+    Optional<MessageReaction> findByMessageIdAndUserIdAndReactionType(String messageId, String userId, String reactionType);
+
+    /**
      * 删除指定消息、用户和类型的反应
      */
     void deleteByMessageIdAndUserIdAndReactionType(String messageId, String userId, String reactionType);

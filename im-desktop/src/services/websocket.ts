@@ -1,4 +1,5 @@
 import { useEffect, useRef, useCallback } from 'react';
+import { ImP2PClient, type ImMessage, type P2PClientOptions } from '../p2p/client.js';
 
 interface WebSocketOptions {
   url: string;
@@ -22,12 +23,10 @@ interface WebSocketHook {
 }
 
 /**
- * WebSocket Hook - 管理WebSocket连接
+ * WebSocket Hook - 基于 P2P-WS 协议
  */
 export const useWebSocket = (options: WebSocketOptions): WebSocketHook => {
-  const wsRef = useRef<WebSocket | null>(null);
-  const reconnectAttemptsRef = useRef(0);
-  const reconnectTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const clientRef = useRef<ImP2PClient | null>(null);
 
   const {
     url,
@@ -43,108 +42,58 @@ export const useWebSocket = (options: WebSocketOptions): WebSocketHook => {
   } = options;
 
   const connect = useCallback(() => {
-    if (wsRef.current?.readyState === WebSocket.OPEN) {
+    if (clientRef.current?.isConnected()) {
       return;
     }
 
-    try {
-      // 构建连接URL
-      const urlObj = new URL(url);
-      if (token) urlObj.searchParams.set('token', token);
-      if (userId) urlObj.searchParams.set('userId', userId);
+    // TODO: keyfile 应通过 Tauri API 从本地安全加载
+    // 开发阶段可先用硬编码的 5MB Uint8Array（生产环境必须替换）
+    const keyfile = generateDevKeyfile();
 
-      wsRef.current = new WebSocket(urlObj.toString());
+    const p2pOptions: P2PClientOptions = {
+      url,
+      token,
+      userId,
+      keyfile,
+      onConnect,
+      onDisconnect,
+      onMessage,
+      onError,
+      reconnect,
+      reconnectInterval,
+      maxReconnectAttempts,
+    };
 
-      wsRef.current.onopen = () => {
-        console.log('WebSocket connected');
-        reconnectAttemptsRef.current = 0;
-        onConnect?.();
-
-        // 发送连接确认消息
-        wsRef.current?.send(
-          JSON.stringify({
-            type: 'CONNECT',
-            userId,
-            timestamp: Date.now(),
-          })
-        );
-      };
-
-      wsRef.current.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data);
-          onMessage?.(data);
-        } catch (e) {
-          console.error('Failed to parse message:', e);
-          onMessage?.(event.data);
-        }
-      };
-
-      wsRef.current.onclose = (event) => {
-        console.log('WebSocket disconnected:', event.code, event.reason);
-        onDisconnect?.(event.reason || 'Connection closed');
-
-        if (reconnect && reconnectAttemptsRef.current < maxReconnectAttempts) {
-          reconnectAttemptsRef.current++;
-          console.log(
-            `Reconnecting... (${reconnectAttemptsRef.current}/${maxReconnectAttempts})`
-          );
-          reconnectTimerRef.current = setTimeout(() => {
-            connect();
-          }, reconnectInterval * reconnectAttemptsRef.current);
-        }
-      };
-
-      wsRef.current.onerror = (error) => {
-        console.error('WebSocket error:', error);
-        onError?.(error);
-      };
-    } catch (error) {
-      console.error('Failed to connect WebSocket:', error);
-      onError?.(error);
-    }
+    clientRef.current = new ImP2PClient(p2pOptions);
+    clientRef.current.connect().catch((e) => onError?.(e));
   }, [url, token, userId, onMessage, onConnect, onDisconnect, onError, reconnect, reconnectInterval, maxReconnectAttempts]);
 
   const disconnect = useCallback(() => {
-    if (reconnectTimerRef.current) {
-      clearTimeout(reconnectTimerRef.current);
-      reconnectTimerRef.current = null;
-    }
-
-    if (wsRef.current) {
-      // 发送断开连接消息
-      try {
-        wsRef.current.send(
-          JSON.stringify({
-            type: 'DISCONNECT',
-            timestamp: Date.now(),
-          })
-        );
-      } catch (_) {
-        // Ignore errors when sending disconnect message
-      }
-
-      wsRef.current.close();
-      wsRef.current = null;
-    }
-
-    reconnectAttemptsRef.current = maxReconnectAttempts; // Prevent auto reconnect
-  }, [maxReconnectAttempts]);
+    clientRef.current?.disconnect();
+    clientRef.current = null;
+  }, []);
 
   const send = useCallback((data: any) => {
-    if (wsRef.current?.readyState === WebSocket.OPEN) {
-      wsRef.current.send(data);
-    } else {
-      console.warn('WebSocket is not connected');
+    if (!clientRef.current?.isConnected()) {
+      console.warn('P2P client is not connected');
+      return;
     }
+    // 兼容旧 JSON 接口，将 data 包装为 IM 消息
+    let msg: ImMessage;
+    try {
+      msg = typeof data === 'string' ? JSON.parse(data) : data;
+    } catch {
+      msg = { type: 'chat', content: String(data), timestamp: Date.now() };
+    }
+    routeMessage(clientRef.current, msg);
   }, []);
 
   const sendJson = useCallback((data: any) => {
-    send(JSON.stringify(data));
+    send(data);
   }, [send]);
 
   const isConnected = useCallback(() => {
-    return wsRef.current?.readyState === WebSocket.OPEN;
+    return clientRef.current?.isConnected() ?? false;
   }, []);
 
   useEffect(() => {
@@ -163,12 +112,10 @@ export const useWebSocket = (options: WebSocketOptions): WebSocketHook => {
 };
 
 /**
- * WebSocket服务类 - 用于非React组件
+ * WebSocket 服务类 - 用于非 React 组件
  */
 export class WebSocketService {
-  private ws: WebSocket | null = null;
-  private reconnectAttempts = 0;
-  private reconnectTimer: NodeJS.Timeout | null = null;
+  private client: ImP2PClient | null = null;
   private options: WebSocketOptions;
 
   constructor(options: WebSocketOptions) {
@@ -176,57 +123,38 @@ export class WebSocketService {
   }
 
   connect(): void {
-    if (this.ws?.readyState === WebSocket.OPEN) return;
-
-    const { url, token, userId, onConnect, onMessage, onDisconnect, onError } =
-      this.options;
-
-    try {
-      const urlObj = new URL(url);
-      if (token) urlObj.searchParams.set('token', token);
-      if (userId) urlObj.searchParams.set('userId', userId);
-
-      this.ws = new WebSocket(urlObj.toString());
-
-      this.ws.onopen = () => {
-        this.reconnectAttempts = 0;
-        onConnect?.();
-        this.sendJson({ type: 'CONNECT', userId, timestamp: Date.now() });
-      };
-
-      this.ws.onmessage = (event) => {
-        try {
-          onMessage?.(JSON.parse(event.data));
-        } catch {
-          onMessage?.(event.data);
-        }
-      };
-
-      this.ws.onclose = (event) => {
-        onDisconnect?.(event.reason);
-        this.scheduleReconnect();
-      };
-
-      this.ws.onerror = (error) => onError?.(error);
-    } catch (error) {
-      onError?.(error);
-    }
+    if (this.client?.isConnected()) return;
+    const keyfile = generateDevKeyfile();
+    this.client = new ImP2PClient({
+      url: this.options.url,
+      token: this.options.token,
+      userId: this.options.userId,
+      keyfile,
+      onConnect: this.options.onConnect,
+      onDisconnect: this.options.onDisconnect,
+      onMessage: this.options.onMessage,
+      onError: this.options.onError,
+      reconnect: this.options.reconnect,
+      reconnectInterval: this.options.reconnectInterval,
+      maxReconnectAttempts: this.options.maxReconnectAttempts,
+    });
+    this.client.connect().catch((e) => this.options.onError?.(e));
   }
 
   disconnect(): void {
-    if (this.reconnectTimer) {
-      clearTimeout(this.reconnectTimer);
-      this.reconnectTimer = null;
-    }
-    this.ws?.close();
-    this.ws = null;
-    this.reconnectAttempts = this.options.maxReconnectAttempts || 10;
+    this.client?.disconnect();
+    this.client = null;
   }
 
   send(data: string): void {
-    if (this.ws?.readyState === WebSocket.OPEN) {
-      this.ws.send(data);
+    if (!this.client?.isConnected()) return;
+    let msg: ImMessage;
+    try {
+      msg = JSON.parse(data);
+    } catch {
+      msg = { type: 'chat', content: data, timestamp: Date.now() };
     }
+    routeMessage(this.client, msg);
   }
 
   sendJson(data: any): void {
@@ -234,20 +162,41 @@ export class WebSocketService {
   }
 
   isConnected(): boolean {
-    return this.ws?.readyState === WebSocket.OPEN;
-  }
-
-  private scheduleReconnect(): void {
-    const { reconnect = true, reconnectInterval = 5000, maxReconnectAttempts = 10 } =
-      this.options;
-
-    if (!reconnect || this.reconnectAttempts >= maxReconnectAttempts) return;
-
-    this.reconnectAttempts++;
-    this.reconnectTimer = setTimeout(() => {
-      this.connect();
-    }, reconnectInterval * this.reconnectAttempts);
+    return this.client?.isConnected() ?? false;
   }
 }
 
-export default WebSocketService;
+function routeMessage(client: ImP2PClient, msg: ImMessage) {
+  switch (msg.type) {
+    case 'chat':
+      client.sendChat(msg);
+      break;
+    case 'group_chat':
+      client.sendGroupChat(msg);
+      break;
+    case 'read_receipt':
+      client.sendReadReceipt(msg);
+      break;
+    case 'typing':
+      client.sendTyping(msg);
+      break;
+    case 'presence':
+      client.sendPresence(msg.payload?.status || 'online');
+      break;
+    default:
+      // 其他类型默认走 chat command
+      client.sendChat(msg);
+  }
+}
+
+/**
+ * 开发阶段临时 keyfile 生成器
+ * 生产环境应通过 Tauri 安全通道从本地文件系统加载
+ */
+function generateDevKeyfile(): Uint8Array {
+  // 5MB 随机 keyfile
+  const size = 5 * 1024 * 1024;
+  const arr = new Uint8Array(size);
+  crypto.getRandomValues(arr);
+  return arr;
+}

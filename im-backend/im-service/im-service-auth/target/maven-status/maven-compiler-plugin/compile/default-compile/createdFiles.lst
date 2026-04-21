@@ -1,7 +1,8 @@
-com/im/service/auth/dto/LoginResponse.class
-com/im/service/auth/service/AuthService.class
-com/im/service/auth/AuthServiceApplication.class
-com/im/service/auth/dto/TokenRefreshRequest.class
-com/im/service/auth/service/TokenService.class
-com/im/service/auth/controller/AuthController.class
-com/im/service/auth/dto/LoginRequest.class
+com\im\service\auth\dto\TokenRefreshRequest.class
+com\im\service\auth\service\TokenService.class
+com\im\service\auth\dto\LoginRequest.class
+com\im\service\auth\service\AuthService.class
+com\im\service\auth\package-info.class
+com\im\service\auth\controller\AuthController.class
+com\im\service\auth\AuthServiceApplication.class
+com\im\service\auth\dto\LoginResponse.class

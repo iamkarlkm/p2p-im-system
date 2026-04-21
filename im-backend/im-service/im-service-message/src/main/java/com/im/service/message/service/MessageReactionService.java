@@ -113,20 +113,20 @@ public class MessageReactionService {
                 .map(stat -> {
                     String type = (String) stat[0];
                     Long count = (Long) stat[1];
-                    return Map.of(
-                            "reactionType", type,
-                            "count", count
-                    );
+                    Map<String, Object> map = new java.util.HashMap<>();
+                    map.put("reactionType", type);
+                    map.put("count", count);
+                    return map;
                 })
                 .collect(Collectors.toList());
         
         Long total = reactionRepository.countByMessageId(messageId);
         
-        return Map.of(
-                "messageId", messageId,
-                "totalReactions", total,
-                "reactionsByType", reactionStats
-        );
+        Map<String, Object> result = new java.util.HashMap<>();
+        result.put("messageId", messageId);
+        result.put("totalReactions", total);
+        result.put("reactionsByType", reactionStats);
+        return result;
     }
 
     /**
