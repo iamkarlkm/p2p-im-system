@@ -11,6 +11,7 @@
 !im-backend/**/*
 !im-desktop/**/*
 !im-mobile/**/*
+!im-service-storage/**/*
 
 # 允许.gitignore本身被版本控制
 !.gitignore
@@ -28,3 +29,5 @@
 /im-backend/im-common/im-common-base/target/
 /im-backend/im-common/im-common-dto/target/
 /im-backend/im-common/im-common-entity/target/
+
+CLAUDE.md
